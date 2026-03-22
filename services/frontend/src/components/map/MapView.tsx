@@ -4,50 +4,8 @@ import { MapboxOverlay } from '@deck.gl/mapbox';
 import { IconLayer } from '@deck.gl/layers';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { useAppStore, windBarbStride } from '../../stores/appStore';
-import { getWindBarbKey, generateWindBarbMapping, generateWindBarbSVG } from '../../utils/windBarbs';
-import type { WindBarbMapping } from '../../utils/windBarbs';
-
-const ICON_SIZE = 64;
-const COLS = 10;
-
-/**
- * Build the wind barb sprite atlas synchronously as colored placeholders,
- * then load actual SVG barbs asynchronously into the same canvas.
- */
-function createAtlasCanvas(): HTMLCanvasElement {
-  const speeds = [0, ...Array.from({ length: 40 }, (_, i) => (i + 1) * 5)];
-  const ROWS = Math.ceil(speeds.length / COLS);
-  const canvas = document.createElement('canvas');
-  canvas.width = COLS * ICON_SIZE;
-  canvas.height = ROWS * ICON_SIZE;
-  return canvas;
-}
-
-async function renderSVGsToCanvas(canvas: HTMLCanvasElement): Promise<void> {
-  const ctx = canvas.getContext('2d')!;
-  const speeds = [0, ...Array.from({ length: 40 }, (_, i) => (i + 1) * 5)];
-
-  for (let index = 0; index < speeds.length; index++) {
-    const svg = generateWindBarbSVG(speeds[index]);
-    const blob = new Blob([svg], { type: 'image/svg+xml' });
-    const url = URL.createObjectURL(blob);
-    try {
-      const img = await new Promise<HTMLImageElement>((resolve, reject) => {
-        const image = new Image();
-        image.onload = () => resolve(image);
-        image.onerror = reject;
-        image.src = url;
-      });
-      const col = index % COLS;
-      const row = Math.floor(index / COLS);
-      ctx.drawImage(img, col * ICON_SIZE, row * ICON_SIZE, ICON_SIZE, ICON_SIZE);
-    } catch {
-      // skip failed icons
-    } finally {
-      URL.revokeObjectURL(url);
-    }
-  }
-}
+import { getWindBarbKey, generateWindBarbMapping } from '../../utils/windBarbs';
+import { getWindBarbAtlas } from '../../utils/windBarbAtlas';
 
 export default function MapView() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -62,11 +20,10 @@ export default function MapView() {
   const setMapZoom = useAppStore((s) => s.setMapZoom);
   const setCursorCoords = useAppStore((s) => s.setCursorCoords);
 
-  // Generate atlas asynchronously, convert to data URL when ready
+  // Generate atlas asynchronously
   useEffect(() => {
-    const canvas = createAtlasCanvas();
-    renderSVGsToCanvas(canvas).then(() => {
-      setAtlasUrl(canvas.toDataURL('image/png'));
+    getWindBarbAtlas().then(({ atlas }) => {
+      setAtlasUrl(atlas);
     });
   }, []);
 
