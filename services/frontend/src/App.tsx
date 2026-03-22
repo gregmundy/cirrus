@@ -1,26 +1,24 @@
-import { useEffect, useRef } from "react";
-import maplibregl from "maplibre-gl";
-import "maplibre-gl/dist/maplibre-gl.css";
+import { useEffect } from 'react';
+import { useAppStore } from './stores/appStore';
+import Toolbar from './components/Toolbar';
+import StatusBar from './components/StatusBar';
+import MapView from './components/map/MapView';
+import './App.css';
 
 export default function App() {
-  const mapContainer = useRef<HTMLDivElement>(null);
-  const map = useRef<maplibregl.Map | null>(null);
+  const fetchMeta = useAppStore((s) => s.fetchMeta);
 
   useEffect(() => {
-    if (map.current || !mapContainer.current) return;
-
-    map.current = new maplibregl.Map({
-      container: mapContainer.current,
-      style: "https://demotiles.maplibre.org/style.json",
-      center: [0, 30],
-      zoom: 2,
-    });
-
-    return () => {
-      map.current?.remove();
-      map.current = null;
-    };
+    fetchMeta();
   }, []);
 
-  return <div ref={mapContainer} style={{ width: "100vw", height: "100vh" }} />;
+  return (
+    <div className="app">
+      <Toolbar />
+      <div className="map-container">
+        <MapView />
+      </div>
+      <StatusBar />
+    </div>
+  );
 }
