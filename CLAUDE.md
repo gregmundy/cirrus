@@ -14,9 +14,9 @@ Local service-oriented architecture — independent containerized services on a 
 
 | Service | Language | Role |
 |---|---|---|
-| **data-acquisition** | Rust (tokio, reqwest) | Polls SADIS/WIFS APIs, manages failover state machine, writes raw payloads |
-| **decoding-engine** | Python 3.12+ (ecCodes, lxml, Shapely, avwx-engine) | Decodes GRIB2/BUFR → arrays, IWXXM → features, TAC → records |
-| **backend-api** | Rust (Axum) | REST + WebSocket API, serves frontend, coordinates services |
+| **acquisition** | Rust (tokio, reqwest) | Polls SADIS/WIFS APIs, manages failover state machine, writes raw payloads |
+| **decoder** | Python 3.12+ (ecCodes, lxml, Shapely, avwx-engine) | Decodes GRIB2/BUFR → arrays, IWXXM → features, TAC → records |
+| **backend** | Rust (Axum) | REST + WebSocket API, serves frontend, coordinates services |
 | **frontend** | React 18 + TypeScript 5, Zustand, MapLibre GL JS + Deck.gl | Operator UI with WebGL map rendering |
 | **alerting** | Rust | Monitors for advisory products, pushes alerts via WebSocket |
 | **briefing** | Python + Playwright | Generates PDF flight documentation |
@@ -30,10 +30,10 @@ Services communicate via **PostgreSQL LISTEN/NOTIFY** and shared Docker volumes 
 ### Data Flow
 
 ```
-SADIS/WIFS APIs → data-acquisition (Rust) → raw files on shared volume
-                                          → NOTIFY decoding-engine
-decoding-engine (Python) → decoded data in PostgreSQL → NOTIFY backend-api
-backend-api (Rust/Axum) → REST/WebSocket → frontend (React/MapLibre/Deck.gl)
+SADIS/WIFS APIs → acquisition (Rust) → raw files on shared volume
+                                     → NOTIFY decoder
+decoder (Python) → decoded data in PostgreSQL → NOTIFY backend
+backend (Rust/Axum) → REST/WebSocket → frontend (React/MapLibre/Deck.gl)
 ```
 
 ## Key Technical Constraints
@@ -74,27 +74,31 @@ docker compose logs -f <service>  # Tail logs for a specific service
 
 ### Per-Service Development
 
-**Rust services** (acquisition, backend-api, alerting, monitor):
+**Rust services** (in `services/rust/`):
 ```bash
-cargo build              # Build
-cargo test               # Run tests
-cargo test <test_name>   # Run single test
+cd services/rust
+cargo build              # Build all workspace crates
+cargo test               # Run all tests
+cargo test -p backend    # Run tests for one crate
 cargo clippy             # Lint
 cargo fmt --check        # Check formatting
 ```
 
-**Python services** (decoding-engine, briefing):
+**Python services** (in `services/python/`):
 ```bash
-python -m pytest         # Run tests
-python -m pytest tests/test_foo.py::test_bar  # Single test
-ruff check .             # Lint
-ruff format --check .    # Check formatting
+cd services/python
+pip install -e ".[decode]"          # Install in dev mode
+python -m pytest                    # Run tests
+python -m pytest tests/test_foo.py  # Single test file
+ruff check .                        # Lint
+ruff format --check .               # Check formatting
 ```
 
-**Frontend**:
+**Frontend** (in `services/frontend/`):
 ```bash
+cd services/frontend
 npm install              # Install dependencies
-npm run dev              # Dev server
+npm run dev              # Dev server with hot reload
 npm test                 # Run tests
 npm run lint             # ESLint
 npm run build            # Production build
