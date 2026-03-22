@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=75.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cirrus"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+    "psycopg[binary]>=3.2",
+]
+
+[project.optional-dependencies]
+decode = [
+    "eccodes>=2.0",
+    "lxml>=5.0",
+    "shapely>=2.0",
+]
+
+[project.scripts]
+cirrus-decoder = "cirrus.decoder.main:main"
+cirrus-briefing = "cirrus.briefing.main:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
