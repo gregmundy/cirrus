@@ -13,6 +13,7 @@
     "@deck.gl/core": "^9.2.11",
     "@deck.gl/layers": "^9.2.11",
     "@deck.gl/mapbox": "^9.2.11",
+    "d3-contour": "^4.0.2",
     "maplibre-gl": "^5.21.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
@@ -20,6 +21,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
+    "@types/d3-contour": "^3.0.6",
     "@types/node": "^24.12.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
