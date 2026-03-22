@@ -30,6 +30,7 @@ export default function MapView() {
   const mapZoom = useAppStore((s) => s.mapZoom);
   const setMapZoom = useAppStore((s) => s.setMapZoom);
   const setCursorCoords = useAppStore((s) => s.setCursorCoords);
+  const setMapCallbacks = useAppStore((s) => s.setMapCallbacks);
   const temperatureGrid = useAppStore((s) => s.temperatureGrid);
   const temperatureVisible = useAppStore((s) => s.temperatureVisible);
   const heightGrid = useAppStore((s) => s.heightGrid);
@@ -118,6 +119,12 @@ export default function MapView() {
     overlayRef.current = overlay;
 
     mapRef.current = map;
+
+    // Register map navigation callbacks for GoTo feature
+    setMapCallbacks(
+      (lat, lon) => map.flyTo({ center: [lon, lat], zoom: 4, duration: 1500 }),
+      (s, w, n, e) => map.fitBounds([[w, s], [e, n]], { padding: 20, duration: 1500 }),
+    );
 
     map.on('zoomend', () => setMapZoom(map.getZoom()));
 

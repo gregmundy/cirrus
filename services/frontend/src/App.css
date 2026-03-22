@@ -91,3 +91,64 @@ html, body, #root {
 .status-right {
   color: #888;
 }
+
+.goto-popover {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #16213e;
+  border: 1px solid #444;
+  border-radius: 4px;
+  padding: 4px 8px;
+}
+
+.goto-tabs {
+  display: flex;
+  gap: 2px;
+}
+
+.goto-tab {
+  background: #333;
+  color: #aaa;
+  border: 1px solid #555;
+  border-radius: 3px;
+  padding: 2px 8px;
+  cursor: pointer;
+  font-size: 11px;
+}
+
+.goto-tab.active {
+  background: #0a3d62;
+  color: #4fc3f7;
+  border-color: #4fc3f7;
+}
+
+.goto-fields {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.goto-fields label {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 12px;
+  color: #aaa;
+}
+
+.goto-fields input {
+  width: 55px;
+  background: #1a1a2e;
+  color: #e0e0e0;
+  border: 1px solid #555;
+  border-radius: 3px;
+  padding: 2px 4px;
+  font-size: 12px;
+  font-family: monospace;
+}
+
+.goto-actions {
+  display: flex;
+  gap: 4px;
+}

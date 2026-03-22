@@ -1,4 +1,5 @@
 import { useAppStore } from '../stores/appStore';
+import GoToLocation from './GoToLocation';
 
 /** Approximate pressure (hPa) -> flight level label */
 function flightLevelLabel(hpa: number): string {
@@ -41,6 +42,8 @@ export default function Toolbar() {
   const heightVisible = useAppStore((s) => s.heightVisible);
   const heightLoading = useAppStore((s) => s.heightLoading);
   const toggleHeight = useAppStore((s) => s.toggleHeight);
+  const mapGoTo = useAppStore((s) => s.mapGoTo);
+  const mapFitBounds = useAppStore((s) => s.mapFitBounds);
 
   const currentRun = availableRuns.find((r) => r.run_time === selectedRunTime);
 
@@ -109,6 +112,11 @@ export default function Toolbar() {
       >
         Height {heightLoading ? '...' : heightVisible ? 'ON' : 'OFF'}
       </button>
+
+      <GoToLocation
+        onGoTo={(lat, lon) => mapGoTo?.(lat, lon)}
+        onFitBounds={(s, w, n, e) => mapFitBounds?.(s, w, n, e)}
+      />
     </div>
   );
 }

@@ -36,6 +36,9 @@ interface AppState {
   // Map state
   mapZoom: number;
   cursorCoords: { lat: number; lon: number } | null;
+  mapGoTo: ((lat: number, lon: number) => void) | null;
+  mapFitBounds: ((south: number, west: number, north: number, east: number) => void) | null;
+  setMapCallbacks: (goTo: (lat: number, lon: number) => void, fitBounds: (s: number, w: number, n: number, e: number) => void) => void;
 
   // Derived display values
   dataRunTime: string | null;
@@ -95,6 +98,9 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   mapZoom: 2,
   cursorCoords: null,
+  mapGoTo: null,
+  mapFitBounds: null,
+  setMapCallbacks: (goTo, fitBounds) => set({ mapGoTo: goTo, mapFitBounds: fitBounds }),
 
   dataRunTime: null,
   dataValidTime: null,
