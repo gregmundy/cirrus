@@ -1,0 +1,138 @@
+services:
+  postgres:
+    build: db/
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./db/migrations:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: always
+
+  acquisition:
+    build:
+      context: services/rust
+      args:
+        SERVICE: acquisition
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8081/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    volumes:
+      - grib_store:/data/grib
+    restart: always
+
+  backend:
+    build:
+      context: services/rust
+      args:
+        SERVICE: backend
+    ports:
+      - "8080:8080"
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: always
+
+  alerting:
+    build:
+      context: services/rust
+      args:
+        SERVICE: alerting
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8082/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: always
+
+  monitor:
+    build:
+      context: services/rust
+      args:
+        SERVICE: monitor
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8083/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: always
+
+  decoder:
+    build: services/python
+    command: ["python", "-m", "cirrus.decoder.main"]
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8090/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    volumes:
+      - grib_store:/data/grib
+    restart: always
+
+  briefing:
+    build: services/python
+    command: ["python", "-m", "cirrus.briefing.main"]
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+    depends_on:
+      postgres:
+        condition: service_started
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8091/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: always
+
+  frontend:
+    build: services/frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:80/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: always
+
+volumes:
+  pgdata:
+  grib_store:
