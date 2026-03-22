@@ -1,3 +1,6 @@
+mod cycle;
+mod nomads;
+
 use axum::{routing::get, Json, Router};
 use serde_json::{json, Value};
 use sqlx::postgres::PgPoolOptions;
