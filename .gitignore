@@ -1,0 +1,30 @@
+# Rust
+target/
+/Cargo.lock
+
+# Python
+__pycache__/
+*.pyc
+*.egg-info/
+.venv/
+dist/
+
+# Node
+node_modules/
+services/frontend/dist/
+
+# Environment
+.env
+
+# Database
+pgdata/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
