@@ -15,6 +15,7 @@ decode = [
     "eccodes>=2.0",
     "lxml>=5.0",
     "shapely>=2.0",
+    "numpy>=2.0",
 ]
 
 [project.scripts]
