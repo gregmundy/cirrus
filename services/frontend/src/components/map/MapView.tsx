@@ -106,7 +106,7 @@ export default function MapView() {
 
     map.addControl(new NavigationControl(), 'top-right');
 
-    const overlay = new MapboxOverlay({ layers: [] });
+    const overlay = new MapboxOverlay({ layers: [], getTooltip: null, pickingRadius: 15 });
     map.addControl(overlay);
     overlayRef.current = overlay;
 
