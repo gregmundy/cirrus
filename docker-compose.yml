@@ -21,8 +21,14 @@ services:
       dockerfile: Dockerfile.rust
       args:
         SERVICE: acquisition
+    ports:
+      - "8081:8081"
     environment:
       DATABASE_URL: ${DATABASE_URL}
+      NOMADS_BASE_URL: ${NOMADS_BASE_URL:-https://nomads.ncep.noaa.gov/cgi-bin/filter_gfs_0p25.pl}
+      POLL_INTERVAL_SECS: ${POLL_INTERVAL_SECS:-300}
+      RETENTION_HOURS: ${RETENTION_HOURS:-48}
+      GRIB_STORE_PATH: ${GRIB_STORE_PATH:-/data/grib}
     depends_on:
       postgres:
         condition: service_healthy
