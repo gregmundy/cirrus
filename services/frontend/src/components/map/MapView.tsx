@@ -37,39 +37,25 @@ export default function MapView() {
         version: 8 as const,
         glyphs: 'https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf',
         sources: {
-          land: {
+          basemap: {
             type: 'raster' as const,
             tiles: [
-              'https://basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}@2x.png',
+              'https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png',
             ],
             tileSize: 256,
             attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
-          },
-          labels: {
-            type: 'raster' as const,
-            tiles: [
-              'https://basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}@2x.png',
-            ],
-            tileSize: 256,
           },
         },
         layers: [
           {
             id: 'background',
             type: 'background' as const,
-            paint: { 'background-color': '#d4e6f1' },
+            paint: { 'background-color': '#a8d0e6' },
           },
           {
-            id: 'land-layer',
+            id: 'basemap-layer',
             type: 'raster' as const,
-            source: 'land',
-            minzoom: 0,
-            maxzoom: 19,
-          },
-          {
-            id: 'labels-layer',
-            type: 'raster' as const,
-            source: 'labels',
+            source: 'basemap',
             minzoom: 0,
             maxzoom: 19,
           },
