@@ -42,6 +42,12 @@ export default function Toolbar() {
   const heightVisible = useAppStore((s) => s.heightVisible);
   const heightLoading = useAppStore((s) => s.heightLoading);
   const toggleHeight = useAppStore((s) => s.toggleHeight);
+  const humidityVisible = useAppStore((s) => s.humidityVisible);
+  const humidityLoading = useAppStore((s) => s.humidityLoading);
+  const toggleHumidity = useAppStore((s) => s.toggleHumidity);
+  const stationVisible = useAppStore((s) => s.stationVisible);
+  const stationLoading = useAppStore((s) => s.stationLoading);
+  const toggleStations = useAppStore((s) => s.toggleStations);
   const mapGoTo = useAppStore((s) => s.mapGoTo);
   const mapFitBounds = useAppStore((s) => s.mapFitBounds);
 
@@ -111,6 +117,20 @@ export default function Toolbar() {
         onClick={toggleHeight}
       >
         Height {heightLoading ? '...' : heightVisible ? 'ON' : 'OFF'}
+      </button>
+
+      <button
+        className={humidityVisible ? 'toggle-btn active' : 'toggle-btn'}
+        onClick={toggleHumidity}
+      >
+        RH {humidityLoading ? '...' : humidityVisible ? 'ON' : 'OFF'}
+      </button>
+
+      <button
+        className={stationVisible ? 'toggle-btn active' : 'toggle-btn'}
+        onClick={toggleStations}
+      >
+        Stations {stationLoading ? '...' : stationVisible ? 'ON' : 'OFF'}
       </button>
 
       <GoToLocation

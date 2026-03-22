@@ -1,5 +1,6 @@
 import { create } from 'zustand';
-import type { GriddedData } from '../components/map/ContourLayer';
+import type { ComputedContours, GriddedData } from '../components/map/ContourLayer';
+import { computeContoursAsync } from '../utils/contourWorkerClient';
 
 export type { GriddedData } from '../components/map/ContourLayer';
 
@@ -10,11 +11,34 @@ export interface WindPoint {
   direction: number;
 }
 
+export interface StationObs {
+  station: string;
+  observation_time: string;
+  raw_text: string;
+  flight_category: string | null;
+  wind_dir_degrees: number | null;
+  wind_speed_kt: number | null;
+  wind_gust_kt: number | null;
+  visibility_sm: number | null;
+  wx_string: string | null;
+  sky_cover: string | null;
+  ceiling_ft: number | null;
+  temp_c: number | null;
+  dewpoint_c: number | null;
+  altimeter_inhg: number | null;
+  latitude: number;
+  longitude: number;
+}
+
 export interface RunMeta {
   run_time: string;
   forecast_hours: number[];
   parameters: string[];
   levels: number[];
+}
+
+function kelvinToCelsius(k: number): number {
+  return k - 273.15;
 }
 
 interface AppState {
@@ -45,21 +69,37 @@ interface AppState {
   dataValidTime: string | null;
   dataForecastHour: number | null;
 
-  // Temperature
-  temperatureGrid: GriddedData | null;
+  // Temperature (pre-computed contours)
+  temperatureContours: ComputedContours | null;
   temperatureVisible: boolean;
   temperatureLoading: boolean;
   temperatureError: string | null;
   toggleTemperature: () => void;
   fetchTemperatureData: () => Promise<void>;
 
-  // Height
-  heightGrid: GriddedData | null;
+  // Height (pre-computed contours)
+  heightContours: ComputedContours | null;
   heightVisible: boolean;
   heightLoading: boolean;
   heightError: string | null;
   toggleHeight: () => void;
   fetchHeightData: () => Promise<void>;
+
+  // Humidity (pre-computed contours)
+  humidityContours: ComputedContours | null;
+  humidityVisible: boolean;
+  humidityLoading: boolean;
+  humidityError: string | null;
+  toggleHumidity: () => void;
+  fetchHumidityData: () => Promise<void>;
+
+  // Stations (OPMET)
+  stationData: StationObs[];
+  stationVisible: boolean;
+  stationLoading: boolean;
+  stationError: string | null;
+  toggleStations: () => void;
+  fetchStationData: () => Promise<void>;
 
   // Actions
   fetchMeta: () => Promise<void>;
@@ -83,6 +123,67 @@ export function windBarbStride(zoom: number): number {
   return 1;
 }
 
+/** Fetch gridded data from the backend and compute contours in a Web Worker. */
+async function fetchAndContour(
+  parameter: string,
+  type: 'temperature' | 'height' | 'humidity',
+  selectedRunTime: string | null,
+  selectedForecastHour: number,
+  selectedLevel: number,
+): Promise<ComputedContours> {
+  const params = new URLSearchParams({
+    parameter,
+    level_hpa: String(selectedLevel),
+    forecast_hour: String(selectedForecastHour),
+    thin: '2',
+  });
+  if (selectedRunTime) params.set('run_time', selectedRunTime);
+
+  const res = await fetch(`/api/gridded?${params}`);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const data: GriddedData = await res.json();
+
+  // Convert temperature values before sending to worker (K → °C)
+  let values = data.values;
+  let labelSuffix: string;
+  let interval: number;
+  let upsampleFactor = 4;
+
+  if (type === 'temperature') {
+    values = values.map(kelvinToCelsius);
+    labelSuffix = '°C';
+    interval = 5;
+  } else if (type === 'humidity') {
+    labelSuffix = '%';
+    interval = 10;
+    upsampleFactor = 6;
+  } else {
+    labelSuffix = 'm';
+    interval = selectedLevel < 400 ? 60 : 30;
+  }
+
+  // Compute contours off the main thread
+  const result = await computeContoursAsync({
+    type,
+    ni: data.ni,
+    nj: data.nj,
+    lats: data.lats,
+    lons: data.lons,
+    values,
+    interval,
+    upsampleFactor,
+    labelSuffix,
+    influenceRadius: 30,
+    minSeparationDeg: 25,
+  });
+
+  return {
+    lines: result.lines,
+    labels: result.labels,
+    extrema: result.extrema,
+  };
+}
+
 export const useAppStore = create<AppState>((set, get) => ({
   windData: [],
   windLoading: false,
@@ -96,7 +197,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   availableRuns: [],
   metaLoading: false,
 
-  mapZoom: 2,
+  mapZoom: 4,
   cursorCoords: null,
   mapGoTo: null,
   mapFitBounds: null,
@@ -106,20 +207,53 @@ export const useAppStore = create<AppState>((set, get) => ({
   dataValidTime: null,
   dataForecastHour: null,
 
-  temperatureGrid: null,
+  temperatureContours: null,
   temperatureVisible: false,
   temperatureLoading: false,
   temperatureError: null,
 
-  heightGrid: null,
+  heightContours: null,
   heightVisible: false,
   heightLoading: false,
   heightError: null,
 
+  humidityContours: null,
+  humidityVisible: false,
+  humidityLoading: false,
+  humidityError: null,
+
+  stationData: [],
+  stationVisible: false,
+  stationLoading: false,
+  stationError: null,
+
+  toggleStations: () => {
+    const wasVisible = get().stationVisible;
+    set({ stationVisible: !wasVisible });
+    if (!wasVisible && get().stationData.length === 0) {
+      get().fetchStationData();
+    }
+  },
+
+  fetchStationData: async () => {
+    set({ stationLoading: true, stationError: null });
+    try {
+      const res = await fetch('/api/opmet/stations');
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data: StationObs[] = await res.json();
+      set({ stationData: data, stationLoading: false });
+    } catch (err) {
+      set({
+        stationError: err instanceof Error ? err.message : 'Unknown error',
+        stationLoading: false,
+      });
+    }
+  },
+
   toggleTemperature: () => {
     const wasVisible = get().temperatureVisible;
     set({ temperatureVisible: !wasVisible });
-    if (!wasVisible && !get().temperatureGrid) {
+    if (!wasVisible && !get().temperatureContours) {
       get().fetchTemperatureData();
     }
   },
@@ -127,8 +261,16 @@ export const useAppStore = create<AppState>((set, get) => ({
   toggleHeight: () => {
     const wasVisible = get().heightVisible;
     set({ heightVisible: !wasVisible });
-    if (!wasVisible && !get().heightGrid) {
+    if (!wasVisible && !get().heightContours) {
       get().fetchHeightData();
+    }
+  },
+
+  toggleHumidity: () => {
+    const wasVisible = get().humidityVisible;
+    set({ humidityVisible: !wasVisible });
+    if (!wasVisible && !get().humidityContours) {
+      get().fetchHumidityData();
     }
   },
 
@@ -136,17 +278,8 @@ export const useAppStore = create<AppState>((set, get) => ({
     const { selectedRunTime, selectedForecastHour, selectedLevel } = get();
     set({ temperatureLoading: true, temperatureError: null });
     try {
-      const params = new URLSearchParams({
-        parameter: 'TMP',
-        level_hpa: String(selectedLevel),
-        forecast_hour: String(selectedForecastHour),
-        thin: '2',
-      });
-      if (selectedRunTime) params.set('run_time', selectedRunTime);
-      const res = await fetch(`/api/gridded?${params}`);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-      set({ temperatureGrid: data, temperatureLoading: false });
+      const contours = await fetchAndContour('TMP', 'temperature', selectedRunTime, selectedForecastHour, selectedLevel);
+      set({ temperatureContours: contours, temperatureLoading: false });
     } catch (err) {
       set({
         temperatureError: err instanceof Error ? err.message : 'Unknown error',
@@ -159,21 +292,26 @@ export const useAppStore = create<AppState>((set, get) => ({
     const { selectedRunTime, selectedForecastHour, selectedLevel } = get();
     set({ heightLoading: true, heightError: null });
     try {
-      const params = new URLSearchParams({
-        parameter: 'HGT',
-        level_hpa: String(selectedLevel),
-        forecast_hour: String(selectedForecastHour),
-        thin: '2',
-      });
-      if (selectedRunTime) params.set('run_time', selectedRunTime);
-      const res = await fetch(`/api/gridded?${params}`);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-      set({ heightGrid: data, heightLoading: false });
+      const contours = await fetchAndContour('HGT', 'height', selectedRunTime, selectedForecastHour, selectedLevel);
+      set({ heightContours: contours, heightLoading: false });
     } catch (err) {
       set({
         heightError: err instanceof Error ? err.message : 'Unknown error',
         heightLoading: false,
+      });
+    }
+  },
+
+  fetchHumidityData: async () => {
+    const { selectedRunTime, selectedForecastHour, selectedLevel } = get();
+    set({ humidityLoading: true, humidityError: null });
+    try {
+      const contours = await fetchAndContour('RH', 'humidity', selectedRunTime, selectedForecastHour, selectedLevel);
+      set({ humidityContours: contours, humidityLoading: false });
+    } catch (err) {
+      set({
+        humidityError: err instanceof Error ? err.message : 'Unknown error',
+        humidityLoading: false,
       });
     }
   },
@@ -257,31 +395,34 @@ export const useAppStore = create<AppState>((set, get) => ({
     }
     set(updates);
     get().fetchWindData();
-    // Clear cached grids
-    set({ temperatureGrid: null, heightGrid: null });
+    // Clear cached contours
+    set({ temperatureContours: null, heightContours: null, humidityContours: null });
     // Refetch visible layers
     if (get().temperatureVisible) get().fetchTemperatureData();
     if (get().heightVisible) get().fetchHeightData();
+    if (get().humidityVisible) get().fetchHumidityData();
   },
 
   setForecastHour: (h: number) => {
     set({ selectedForecastHour: h });
     get().fetchWindData();
-    // Clear cached grids
-    set({ temperatureGrid: null, heightGrid: null });
+    // Clear cached contours
+    set({ temperatureContours: null, heightContours: null, humidityContours: null });
     // Refetch visible layers
     if (get().temperatureVisible) get().fetchTemperatureData();
     if (get().heightVisible) get().fetchHeightData();
+    if (get().humidityVisible) get().fetchHumidityData();
   },
 
   setLevel: (l: number) => {
     set({ selectedLevel: l });
     get().fetchWindData();
-    // Clear cached grids
-    set({ temperatureGrid: null, heightGrid: null });
+    // Clear cached contours
+    set({ temperatureContours: null, heightContours: null, humidityContours: null });
     // Refetch visible layers
     if (get().temperatureVisible) get().fetchTemperatureData();
     if (get().heightVisible) get().fetchHeightData();
+    if (get().humidityVisible) get().fetchHumidityData();
   },
 
   toggleWind: () => set((s) => ({ windVisible: !s.windVisible })),

@@ -8,7 +8,10 @@ import { useAppStore, windBarbStride } from '../../stores/appStore';
 import type { WindPoint } from '../../stores/appStore';
 import { getWindBarbKey, generateWindBarbMapping } from '../../utils/windBarbs';
 import { getWindBarbAtlas } from '../../utils/windBarbAtlas';
-import { createTemperatureLayers, createHeightLayers } from './ContourLayer';
+import { createTemperatureLayers, createHeightLayers, createHumidityLayers } from './ContourLayer';
+import { createStationDotsLayer, createStationLabelsLayer } from './StationLayer';
+import StationPopup from '../StationPopup';
+import type { StationObs } from '../../stores/appStore';
 
 export default function MapView() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -16,6 +19,9 @@ export default function MapView() {
   const overlayRef = useRef<MapboxOverlay | null>(null);
   const [atlasUrl, setAtlasUrl] = useState<string | null>(null);
   const iconMapping = useMemo(() => generateWindBarbMapping(), []);
+  const [selectedStation, setSelectedStation] = useState<{
+    obs: StationObs; x: number; y: number;
+  } | null>(null);
   const [tooltip, setTooltip] = useState<{
     x: number;
     y: number;
@@ -31,11 +37,15 @@ export default function MapView() {
   const setMapZoom = useAppStore((s) => s.setMapZoom);
   const setCursorCoords = useAppStore((s) => s.setCursorCoords);
   const setMapCallbacks = useAppStore((s) => s.setMapCallbacks);
-  const temperatureGrid = useAppStore((s) => s.temperatureGrid);
+  const temperatureContours = useAppStore((s) => s.temperatureContours);
   const temperatureVisible = useAppStore((s) => s.temperatureVisible);
-  const heightGrid = useAppStore((s) => s.heightGrid);
+  const heightContours = useAppStore((s) => s.heightContours);
   const heightVisible = useAppStore((s) => s.heightVisible);
-  const selectedLevel = useAppStore((s) => s.selectedLevel);
+  const humidityContours = useAppStore((s) => s.humidityContours);
+  const humidityVisible = useAppStore((s) => s.humidityVisible);
+  const stationData = useAppStore((s) => s.stationData);
+  const stationVisible = useAppStore((s) => s.stationVisible);
+  const fetchStationData = useAppStore((s) => s.fetchStationData);
 
   const handleWindHover = useCallback((info: { object?: WindPoint; x: number; y: number }) => {
     if (info.object) {
@@ -58,6 +68,13 @@ export default function MapView() {
       setAtlasUrl(atlas);
     });
   }, []);
+
+  // Auto-refresh station data every 5 minutes
+  useEffect(() => {
+    if (!stationVisible) return;
+    const timer = setInterval(() => fetchStationData(), 5 * 60 * 1000);
+    return () => clearInterval(timer);
+  }, [stationVisible, fetchStationData]);
 
   // Initialize map
   useEffect(() => {
@@ -108,8 +125,8 @@ export default function MapView() {
           },
         ],
       },
-      center: [0, 30],
-      zoom: 2,
+      center: [-98, 39],
+      zoom: 4,
     });
 
     map.addControl(new NavigationControl(), 'top-right');
@@ -152,13 +169,18 @@ export default function MapView() {
     const layers: Layer[] = [];
 
     // Height contours (bottom)
-    if (heightVisible && heightGrid) {
-      layers.push(...createHeightLayers(heightGrid, selectedLevel));
+    if (heightVisible && heightContours) {
+      layers.push(...createHeightLayers(heightContours));
     }
 
-    // Temperature contours (middle)
-    if (temperatureVisible && temperatureGrid) {
-      layers.push(...createTemperatureLayers(temperatureGrid));
+    // Humidity contours
+    if (humidityVisible && humidityContours) {
+      layers.push(...createHumidityLayers(humidityContours));
+    }
+
+    // Temperature contours
+    if (temperatureVisible && temperatureContours) {
+      layers.push(...createTemperatureLayers(temperatureContours));
     }
 
     // Wind barbs (top)
@@ -185,8 +207,20 @@ export default function MapView() {
       }));
     }
 
+    // Station dots and labels
+    if (stationVisible && stationData.length > 0) {
+      const dotsLayer = createStationDotsLayer(stationData, (info) => {
+        if (info.object) {
+          setSelectedStation({ obs: info.object, x: info.x, y: info.y });
+        }
+      });
+      if (dotsLayer) layers.push(dotsLayer);
+      const labelsLayer = createStationLabelsLayer(stationData);
+      if (labelsLayer) layers.push(labelsLayer);
+    }
+
     overlayRef.current.setProps({ layers });
-  }, [windData, windVisible, mapZoom, atlasUrl, iconMapping, handleWindHover, temperatureGrid, temperatureVisible, heightGrid, heightVisible, selectedLevel]);
+  }, [windData, windVisible, mapZoom, atlasUrl, iconMapping, handleWindHover, temperatureContours, temperatureVisible, heightContours, heightVisible, humidityContours, humidityVisible, stationData, stationVisible]);
 
   return (
     <>
@@ -218,6 +252,14 @@ export default function MapView() {
             {Math.abs(tooltip.lon).toFixed(1)}{tooltip.lon >= 0 ? 'E' : 'W'}
           </div>
         </div>
+      )}
+      {selectedStation && (
+        <StationPopup
+          station={selectedStation.obs}
+          x={selectedStation.x}
+          y={selectedStation.y}
+          onClose={() => setSelectedStation(null)}
+        />
       )}
     </>
   );
