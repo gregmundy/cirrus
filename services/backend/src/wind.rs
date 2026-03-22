@@ -123,7 +123,11 @@ pub async fn get_wind(
             let v = v_vals[idx] as f64;
 
             let lat = u_row.lat_first + (j as f64) * d_lat;
-            let lon = u_row.lon_first + (i as f64) * d_lon;
+            let mut lon = u_row.lon_first + (i as f64) * d_lon;
+            // Convert 0-360 longitude to -180 to 180 for MapLibre
+            if lon > 180.0 {
+                lon -= 360.0;
+            }
 
             let speed_ms = (u * u + v * v).sqrt();
             let speed_kt = (speed_ms * 1.94384) as f32;
