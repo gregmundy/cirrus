@@ -1,3 +1,6 @@
+mod meta;
+mod wind;
+
 use axum::{routing::get, Json, Router};
 use serde_json::{json, Value};
 use sqlx::postgres::PgPoolOptions;
@@ -22,7 +25,7 @@ async fn main() {
     let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
 
     let pool = PgPoolOptions::new()
-        .max_connections(2)
+        .max_connections(10)
         .connect(&database_url)
         .await
         .expect("Failed to connect to database");
@@ -30,7 +33,11 @@ async fn main() {
     let _conn = pool.acquire().await.expect("Failed to acquire connection");
     tracing::info!("{SERVICE_NAME} connected to database");
 
-    let app = Router::new().route("/health", get(health));
+    let app = Router::new()
+        .route("/health", get(health))
+        .route("/api/wind", get(wind::get_wind))
+        .route("/api/gridded/meta", get(meta::get_meta))
+        .with_state(pool);
 
     let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{PORT}"))
         .await
