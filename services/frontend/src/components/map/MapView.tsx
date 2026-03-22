@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState, useMemo } from 'react';
+import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import { Map, NavigationControl } from 'maplibre-gl';
 import { MapboxOverlay } from '@deck.gl/mapbox';
 import { IconLayer } from '@deck.gl/layers';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { useAppStore, windBarbStride } from '../../stores/appStore';
+import type { WindPoint } from '../../stores/appStore';
 import { getWindBarbKey, generateWindBarbMapping } from '../../utils/windBarbs';
 import { getWindBarbAtlas } from '../../utils/windBarbAtlas';
 
@@ -13,12 +14,35 @@ export default function MapView() {
   const overlayRef = useRef<MapboxOverlay | null>(null);
   const [atlasUrl, setAtlasUrl] = useState<string | null>(null);
   const iconMapping = useMemo(() => generateWindBarbMapping(), []);
+  const [tooltip, setTooltip] = useState<{
+    x: number;
+    y: number;
+    speed: number;
+    direction: number;
+    lat: number;
+    lon: number;
+  } | null>(null);
 
   const windData = useAppStore((s) => s.windData);
   const windVisible = useAppStore((s) => s.windVisible);
   const mapZoom = useAppStore((s) => s.mapZoom);
   const setMapZoom = useAppStore((s) => s.setMapZoom);
   const setCursorCoords = useAppStore((s) => s.setCursorCoords);
+
+  const handleWindHover = useCallback((info: { object?: WindPoint; x: number; y: number }) => {
+    if (info.object) {
+      setTooltip({
+        x: info.x,
+        y: info.y,
+        speed: info.object.speed,
+        direction: info.object.direction,
+        lat: info.object.lat,
+        lon: info.object.lon,
+      });
+    } else {
+      setTooltip(null);
+    }
+  }, []);
 
   // Generate atlas asynchronously
   useEffect(() => {
@@ -131,17 +155,45 @@ export default function MapView() {
         sizeUnits: 'pixels',
         sizeMinPixels: 20,
         sizeMaxPixels: 50,
-        pickable: false,
+        pickable: true,
+        onHover: handleWindHover,
       }));
     }
 
     overlayRef.current.setProps({ layers });
-  }, [windData, windVisible, mapZoom, atlasUrl, iconMapping]);
+  }, [windData, windVisible, mapZoom, atlasUrl, iconMapping, handleWindHover]);
 
   return (
-    <div
-      ref={containerRef}
-      style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0 }}
-    />
+    <>
+      <div
+        ref={containerRef}
+        style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0 }}
+      />
+      {tooltip && (
+        <div
+          style={{
+            position: 'absolute',
+            left: tooltip.x + 12,
+            top: tooltip.y - 40,
+            background: 'rgba(22,33,62,0.95)',
+            color: '#e0e0e0',
+            padding: '6px 10px',
+            borderRadius: 4,
+            fontFamily: 'monospace',
+            fontSize: 12,
+            pointerEvents: 'none',
+            zIndex: 20,
+            whiteSpace: 'nowrap',
+            border: '1px solid rgba(255,255,255,0.15)',
+          }}
+        >
+          <div>{Math.round(tooltip.speed)} kt from {Math.round(tooltip.direction)}&deg;</div>
+          <div style={{ color: '#999', fontSize: 11 }}>
+            {Math.abs(tooltip.lat).toFixed(1)}{tooltip.lat >= 0 ? 'N' : 'S'}{' '}
+            {Math.abs(tooltip.lon).toFixed(1)}{tooltip.lon >= 0 ? 'E' : 'W'}
+          </div>
+        </div>
+      )}
+    </>
   );
 }
