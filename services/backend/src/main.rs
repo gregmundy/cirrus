@@ -1,3 +1,4 @@
+mod gridded;
 mod meta;
 mod wind;
 
@@ -36,6 +37,7 @@ async fn main() {
     let app = Router::new()
         .route("/health", get(health))
         .route("/api/wind", get(wind::get_wind))
+        .route("/api/gridded", get(gridded::get_gridded))
         .route("/api/gridded/meta", get(meta::get_meta))
         .with_state(pool);
 
