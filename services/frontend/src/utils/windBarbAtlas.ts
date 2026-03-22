@@ -1,4 +1,4 @@
-import { generateWindBarbSVG, generateWindBarbMapping } from './windBarbs';
+import { generateWindBarbSVG, generateWindBarbMapping, generateStationBarbMapping } from './windBarbs';
 import type { WindBarbMapping } from './windBarbs';
 
 const ICON_SIZE = 64;
@@ -53,4 +53,53 @@ export async function getWindBarbAtlas(): Promise<{
   };
 
   return cachedResult;
+}
+
+let cachedStationResult: { atlas: string; mapping: WindBarbMapping } | null = null;
+
+/**
+ * Generate a darker, thicker wind barb atlas for station model plots.
+ * Black strokes at 3px width for visibility on light map backgrounds.
+ */
+export async function getStationWindBarbAtlas(): Promise<{
+  atlas: string;
+  mapping: WindBarbMapping;
+}> {
+  if (cachedStationResult) return cachedStationResult;
+
+  const speeds = [0, ...Array.from({ length: 40 }, (_, i) => (i + 1) * 5)];
+  const ROWS = Math.ceil(speeds.length / COLS);
+
+  const canvas = document.createElement('canvas');
+  canvas.width = COLS * ICON_SIZE;
+  canvas.height = ROWS * ICON_SIZE;
+  const ctx = canvas.getContext('2d')!;
+
+  for (let index = 0; index < speeds.length; index++) {
+    const svg = generateWindBarbSVG(speeds[index], false, '#222222', 3);
+    const blob = new Blob([svg], { type: 'image/svg+xml' });
+    const url = URL.createObjectURL(blob);
+    try {
+      const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+        const image = new Image();
+        image.onload = () => resolve(image);
+        image.onerror = reject;
+        image.src = url;
+      });
+      const col = index % COLS;
+      const row = Math.floor(index / COLS);
+      ctx.drawImage(img, col * ICON_SIZE, row * ICON_SIZE, ICON_SIZE, ICON_SIZE);
+    } catch {
+      // skip
+    } finally {
+      URL.revokeObjectURL(url);
+    }
+  }
+
+  cachedStationResult = {
+    atlas: canvas.toDataURL('image/png'),
+    mapping: generateStationBarbMapping(),
+  };
+
+  return cachedStationResult;
 }

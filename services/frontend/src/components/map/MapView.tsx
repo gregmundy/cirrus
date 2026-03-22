@@ -7,9 +7,11 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import { useAppStore, windBarbStride } from '../../stores/appStore';
 import type { WindPoint } from '../../stores/appStore';
 import { getWindBarbKey, generateWindBarbMapping } from '../../utils/windBarbs';
-import { getWindBarbAtlas } from '../../utils/windBarbAtlas';
+import { getWindBarbAtlas, getStationWindBarbAtlas } from '../../utils/windBarbAtlas';
 import { createTemperatureLayers, createHeightLayers, createHumidityLayers } from './ContourLayer';
-import { createStationDotsLayer, createStationLabelsLayer } from './StationLayer';
+import { createStationDotsLayer, createStationLabelsLayer, createStationModelLayers } from './StationLayer';
+import { getStationModelAtlas } from '../../utils/stationModelAtlas';
+import type { StationModelMapping } from '../../utils/stationModelAtlas';
 import StationPopup from '../StationPopup';
 import type { StationObs } from '../../stores/appStore';
 
@@ -18,6 +20,10 @@ export default function MapView() {
   const mapRef = useRef<Map | null>(null);
   const overlayRef = useRef<MapboxOverlay | null>(null);
   const [atlasUrl, setAtlasUrl] = useState<string | null>(null);
+  const [stationBarbAtlasUrl, setStationBarbAtlasUrl] = useState<string | null>(null);
+  const [stationBarbMapping, setStationBarbMapping] = useState<Record<string, { x: number; y: number; width: number; height: number; anchorY: number }> | null>(null);
+  const [coverAtlasUrl, setCoverAtlasUrl] = useState<string | null>(null);
+  const [coverIconMapping, setCoverIconMapping] = useState<StationModelMapping | null>(null);
   const iconMapping = useMemo(() => generateWindBarbMapping(), []);
   const [selectedStation, setSelectedStation] = useState<{
     obs: StationObs; x: number; y: number;
@@ -62,10 +68,16 @@ export default function MapView() {
     }
   }, []);
 
-  // Generate atlas asynchronously
+  // Generate icon atlases asynchronously
   useEffect(() => {
-    getWindBarbAtlas().then(({ atlas }) => {
-      setAtlasUrl(atlas);
+    getWindBarbAtlas().then(({ atlas }) => setAtlasUrl(atlas));
+    getStationWindBarbAtlas().then(({ atlas, mapping }) => {
+      setStationBarbAtlasUrl(atlas);
+      setStationBarbMapping(mapping);
+    });
+    getStationModelAtlas().then(({ atlas, mapping }) => {
+      setCoverAtlasUrl(atlas);
+      setCoverIconMapping(mapping);
     });
   }, []);
 
@@ -207,20 +219,30 @@ export default function MapView() {
       }));
     }
 
-    // Station dots and labels
+    // Station observations — full model at zoom >= 6, simple dots at lower zoom
     if (stationVisible && stationData.length > 0) {
-      const dotsLayer = createStationDotsLayer(stationData, (info) => {
+      const stationClick = (info: { object?: StationObs; x: number; y: number }) => {
         if (info.object) {
           setSelectedStation({ obs: info.object, x: info.x, y: info.y });
         }
-      });
-      if (dotsLayer) layers.push(dotsLayer);
-      const labelsLayer = createStationLabelsLayer(stationData);
-      if (labelsLayer) layers.push(labelsLayer);
+      };
+
+      if (mapZoom >= 6 && stationBarbAtlasUrl && stationBarbMapping && coverAtlasUrl && coverIconMapping) {
+        layers.push(...createStationModelLayers(
+          stationData, stationClick, stationBarbAtlasUrl,
+          stationBarbMapping as Record<string, { x: number; y: number; width: number; height: number }>,
+          coverAtlasUrl, coverIconMapping, mapZoom,
+        ));
+      } else {
+        const dotsLayer = createStationDotsLayer(stationData, stationClick);
+        if (dotsLayer) layers.push(dotsLayer);
+        const labelsLayer = createStationLabelsLayer(stationData);
+        if (labelsLayer) layers.push(labelsLayer);
+      }
     }
 
     overlayRef.current.setProps({ layers });
-  }, [windData, windVisible, mapZoom, atlasUrl, iconMapping, handleWindHover, temperatureContours, temperatureVisible, heightContours, heightVisible, humidityContours, humidityVisible, stationData, stationVisible]);
+  }, [windData, windVisible, mapZoom, atlasUrl, stationBarbAtlasUrl, coverAtlasUrl, coverIconMapping, iconMapping, handleWindHover, temperatureContours, temperatureVisible, heightContours, heightVisible, humidityContours, humidityVisible, stationData, stationVisible]);
 
   return (
     <>

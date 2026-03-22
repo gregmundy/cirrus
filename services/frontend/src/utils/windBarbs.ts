@@ -66,10 +66,46 @@ export function generateWindBarbMapping(): WindBarbMapping {
 }
 
 /**
+ * Generate icon mapping for station model wind barbs.
+ * Anchored at the staff bottom (barb end) so the barb base sits at
+ * the station position and the staff extends outward.
+ */
+export function generateStationBarbMapping(): WindBarbMapping {
+  const mapping: WindBarbMapping = {};
+  const staffTop = 8; // matches SVG staffTop — plain end of staff
+
+  mapping['calm'] = {
+    x: 0, y: 0,
+    width: ICON_SIZE, height: ICON_SIZE,
+    anchorY: ICON_SIZE / 2, // calm circle stays centered
+  };
+
+  for (let speed = 5; speed <= 200; speed += 5) {
+    const index = speed / 5;
+    const col = index % COLS;
+    const row = Math.floor(index / COLS);
+    mapping[`wb_${speed}`] = {
+      x: col * ICON_SIZE,
+      y: row * ICON_SIZE,
+      width: ICON_SIZE,
+      height: ICON_SIZE,
+      anchorY: staffTop, // anchor at plain end (at station), barbs extend outward
+    };
+  }
+
+  return mapping;
+}
+
+/**
  * Generate a wind barb as an SVG string for a given speed.
  * The barb points upward (north). Staff at center-bottom, barbs on left.
  */
-export function generateWindBarbSVG(speedKt: number, mirror: boolean = false): string {
+export function generateWindBarbSVG(
+  speedKt: number,
+  mirror: boolean = false,
+  color: string = '#1a5fad',
+  strokeWidth: number = 2,
+): string {
   const size = ICON_SIZE;
   const cx = size / 2;
   const staffTop = 8;
@@ -79,13 +115,13 @@ export function generateWindBarbSVG(speedKt: number, mirror: boolean = false): s
   if (speedKt < 2.5) {
     // Calm: circle
     return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}">
-      <circle cx="${cx}" cy="${size / 2}" r="4" fill="none" stroke="#1a5fad" stroke-width="2"/>
+      <circle cx="${cx}" cy="${size / 2}" r="4" fill="none" stroke="${color}" stroke-width="${strokeWidth}"/>
     </svg>`;
   }
 
   const paths: string[] = [];
   // Staff line
-  paths.push(`<line x1="${cx}" y1="${staffTop}" x2="${cx}" y2="${staffBottom}" stroke="#1a5fad" stroke-width="2" stroke-linecap="round"/>`);
+  paths.push(`<line x1="${cx}" y1="${staffTop}" x2="${cx}" y2="${staffBottom}" stroke="${color}" stroke-width="${strokeWidth}" stroke-linecap="round"/>`);
 
   let remaining = Math.round(speedKt / 5) * 5;
   let y = staffBottom; // Start from bottom of staff (tail end — barbs fly downwind)
@@ -96,7 +132,7 @@ export function generateWindBarbSVG(speedKt: number, mirror: boolean = false): s
   while (remaining >= 50) {
     const x1 = cx;
     const x2 = cx + side * barbLength;
-    paths.push(`<polygon points="${x1},${y} ${x2},${y - spacing / 2} ${x1},${y - spacing}" fill="#1a5fad" stroke="#1a5fad" stroke-width="1"/>`);
+    paths.push(`<polygon points="${x1},${y} ${x2},${y - spacing / 2} ${x1},${y - spacing}" fill="${color}" stroke="${color}" stroke-width="1"/>`);
     y -= spacing + 2;
     remaining -= 50;
   }
@@ -104,7 +140,7 @@ export function generateWindBarbSVG(speedKt: number, mirror: boolean = false): s
   // Full barbs (10 kt)
   while (remaining >= 10) {
     const x2 = cx + side * barbLength;
-    paths.push(`<line x1="${cx}" y1="${y}" x2="${x2}" y2="${y + 4}" stroke="#1a5fad" stroke-width="2" stroke-linecap="round"/>`);
+    paths.push(`<line x1="${cx}" y1="${y}" x2="${x2}" y2="${y + 4}" stroke="${color}" stroke-width="${strokeWidth}" stroke-linecap="round"/>`);
     y -= spacing;
     remaining -= 10;
   }
@@ -112,7 +148,7 @@ export function generateWindBarbSVG(speedKt: number, mirror: boolean = false): s
   // Half barb (5 kt)
   if (remaining >= 5) {
     const x2 = cx + side * (barbLength * 0.6);
-    paths.push(`<line x1="${cx}" y1="${y}" x2="${x2}" y2="${y + 3}" stroke="#1a5fad" stroke-width="2" stroke-linecap="round"/>`);
+    paths.push(`<line x1="${cx}" y1="${y}" x2="${x2}" y2="${y + 3}" stroke="${color}" stroke-width="${strokeWidth}" stroke-linecap="round"/>`);
   }
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}">${paths.join('')}</svg>`;
