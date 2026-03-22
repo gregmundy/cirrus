@@ -6,8 +6,8 @@ const RUN_HOURS: [u32; 4] = [18, 12, 6, 0];
 /// How long after the nominal run time before data is typically available
 const AVAILABILITY_OFFSET_MINUTES: i64 = 270; // 4h30m
 
-/// All forecast hours we download per cycle (f006 through f036, step 3)
-pub const FORECAST_HOURS: [u32; 11] = [6, 9, 12, 15, 18, 21, 24, 27, 30, 33, 36];
+/// All forecast hours we download per cycle (f000, then f006 through f036, step 3)
+pub const FORECAST_HOURS: [u32; 12] = [0, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33, 36];
 
 /// Determine the latest GFS cycle that should be available for download.
 pub fn latest_available_cycle(now: DateTime<Utc>) -> Option<DateTime<Utc>> {
