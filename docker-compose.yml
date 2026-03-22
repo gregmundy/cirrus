@@ -17,7 +17,8 @@ services:
 
   acquisition:
     build:
-      context: services/rust
+      context: services/
+      dockerfile: Dockerfile.rust
       args:
         SERVICE: acquisition
     environment:
@@ -36,7 +37,8 @@ services:
 
   backend:
     build:
-      context: services/rust
+      context: services/
+      dockerfile: Dockerfile.rust
       args:
         SERVICE: backend
     ports:
@@ -55,7 +57,8 @@ services:
 
   alerting:
     build:
-      context: services/rust
+      context: services/
+      dockerfile: Dockerfile.rust
       args:
         SERVICE: alerting
     environment:
@@ -72,7 +75,8 @@ services:
 
   monitor:
     build:
-      context: services/rust
+      context: services/
+      dockerfile: Dockerfile.rust
       args:
         SERVICE: monitor
     environment:
@@ -88,7 +92,7 @@ services:
     restart: always
 
   decoder:
-    build: services/python
+    build: services/decoder
     command: ["python", "-m", "cirrus.decoder.main"]
     environment:
       DATABASE_URL: ${DATABASE_URL}
@@ -105,7 +109,7 @@ services:
     restart: always
 
   briefing:
-    build: services/python
+    build: services/briefing
     command: ["python", "-m", "cirrus.briefing.main"]
     environment:
       DATABASE_URL: ${DATABASE_URL}

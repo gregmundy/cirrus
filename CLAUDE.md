@@ -74,9 +74,9 @@ docker compose logs -f <service>  # Tail logs for a specific service
 
 ### Per-Service Development
 
-**Rust services** (in `services/rust/`):
+**Rust services** (workspace root at `services/`):
 ```bash
-cd services/rust
+cd services
 cargo build              # Build all workspace crates
 cargo test               # Run all tests
 cargo test -p backend    # Run tests for one crate
@@ -84,9 +84,9 @@ cargo clippy             # Lint
 cargo fmt --check        # Check formatting
 ```
 
-**Python services** (in `services/python/`):
+**Python services** (each in `services/<name>/`, e.g. `services/decoder/`, `services/briefing/`):
 ```bash
-cd services/python
+cd services/decoder
 pip install -e ".[decode]"          # Install in dev mode
 python -m pytest                    # Run tests
 python -m pytest tests/test_foo.py  # Single test file
