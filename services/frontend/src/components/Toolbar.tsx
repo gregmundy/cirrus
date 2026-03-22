@@ -35,6 +35,12 @@ export default function Toolbar() {
   const setForecastHour = useAppStore((s) => s.setForecastHour);
   const setLevel = useAppStore((s) => s.setLevel);
   const toggleWind = useAppStore((s) => s.toggleWind);
+  const temperatureVisible = useAppStore((s) => s.temperatureVisible);
+  const temperatureLoading = useAppStore((s) => s.temperatureLoading);
+  const toggleTemperature = useAppStore((s) => s.toggleTemperature);
+  const heightVisible = useAppStore((s) => s.heightVisible);
+  const heightLoading = useAppStore((s) => s.heightLoading);
+  const toggleHeight = useAppStore((s) => s.toggleHeight);
 
   const currentRun = availableRuns.find((r) => r.run_time === selectedRunTime);
 
@@ -88,6 +94,20 @@ export default function Toolbar() {
         onClick={toggleWind}
       >
         Wind {windLoading ? '...' : windVisible ? 'ON' : 'OFF'}
+      </button>
+
+      <button
+        className={temperatureVisible ? 'toggle-btn active' : 'toggle-btn'}
+        onClick={toggleTemperature}
+      >
+        Temp {temperatureLoading ? '...' : temperatureVisible ? 'ON' : 'OFF'}
+      </button>
+
+      <button
+        className={heightVisible ? 'toggle-btn active' : 'toggle-btn'}
+        onClick={toggleHeight}
+      >
+        Height {heightLoading ? '...' : heightVisible ? 'ON' : 'OFF'}
       </button>
     </div>
   );

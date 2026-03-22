@@ -2,11 +2,13 @@ import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import { Map, NavigationControl } from 'maplibre-gl';
 import { MapboxOverlay } from '@deck.gl/mapbox';
 import { IconLayer } from '@deck.gl/layers';
+import type { Layer } from '@deck.gl/core';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { useAppStore, windBarbStride } from '../../stores/appStore';
 import type { WindPoint } from '../../stores/appStore';
 import { getWindBarbKey, generateWindBarbMapping } from '../../utils/windBarbs';
 import { getWindBarbAtlas } from '../../utils/windBarbAtlas';
+import { createTemperatureLayers, createHeightLayers } from './ContourLayer';
 
 export default function MapView() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -28,6 +30,11 @@ export default function MapView() {
   const mapZoom = useAppStore((s) => s.mapZoom);
   const setMapZoom = useAppStore((s) => s.setMapZoom);
   const setCursorCoords = useAppStore((s) => s.setCursorCoords);
+  const temperatureGrid = useAppStore((s) => s.temperatureGrid);
+  const temperatureVisible = useAppStore((s) => s.temperatureVisible);
+  const heightGrid = useAppStore((s) => s.heightGrid);
+  const heightVisible = useAppStore((s) => s.heightVisible);
+  const selectedLevel = useAppStore((s) => s.selectedLevel);
 
   const handleWindHover = useCallback((info: { object?: WindPoint; x: number; y: number }) => {
     if (info.object) {
@@ -135,8 +142,19 @@ export default function MapView() {
   useEffect(() => {
     if (!overlayRef.current || !atlasUrl) return;
 
-    const layers: IconLayer[] = [];
+    const layers: Layer[] = [];
 
+    // Height contours (bottom)
+    if (heightVisible && heightGrid) {
+      layers.push(...createHeightLayers(heightGrid, selectedLevel));
+    }
+
+    // Temperature contours (middle)
+    if (temperatureVisible && temperatureGrid) {
+      layers.push(...createTemperatureLayers(temperatureGrid));
+    }
+
+    // Wind barbs (top)
     if (windVisible && windData.length > 0) {
       const stride = windBarbStride(mapZoom);
       const filtered = stride === 1
@@ -161,7 +179,7 @@ export default function MapView() {
     }
 
     overlayRef.current.setProps({ layers });
-  }, [windData, windVisible, mapZoom, atlasUrl, iconMapping, handleWindHover]);
+  }, [windData, windVisible, mapZoom, atlasUrl, iconMapping, handleWindHover, temperatureGrid, temperatureVisible, heightGrid, heightVisible, selectedLevel]);
 
   return (
     <>

@@ -1,4 +1,7 @@
 import { create } from 'zustand';
+import type { GriddedData } from '../components/map/ContourLayer';
+
+export type { GriddedData } from '../components/map/ContourLayer';
 
 export interface WindPoint {
   lat: number;
@@ -38,6 +41,22 @@ interface AppState {
   dataRunTime: string | null;
   dataValidTime: string | null;
   dataForecastHour: number | null;
+
+  // Temperature
+  temperatureGrid: GriddedData | null;
+  temperatureVisible: boolean;
+  temperatureLoading: boolean;
+  temperatureError: string | null;
+  toggleTemperature: () => void;
+  fetchTemperatureData: () => Promise<void>;
+
+  // Height
+  heightGrid: GriddedData | null;
+  heightVisible: boolean;
+  heightLoading: boolean;
+  heightError: string | null;
+  toggleHeight: () => void;
+  fetchHeightData: () => Promise<void>;
 
   // Actions
   fetchMeta: () => Promise<void>;
@@ -80,6 +99,78 @@ export const useAppStore = create<AppState>((set, get) => ({
   dataRunTime: null,
   dataValidTime: null,
   dataForecastHour: null,
+
+  temperatureGrid: null,
+  temperatureVisible: false,
+  temperatureLoading: false,
+  temperatureError: null,
+
+  heightGrid: null,
+  heightVisible: false,
+  heightLoading: false,
+  heightError: null,
+
+  toggleTemperature: () => {
+    const wasVisible = get().temperatureVisible;
+    set({ temperatureVisible: !wasVisible });
+    if (!wasVisible && !get().temperatureGrid) {
+      get().fetchTemperatureData();
+    }
+  },
+
+  toggleHeight: () => {
+    const wasVisible = get().heightVisible;
+    set({ heightVisible: !wasVisible });
+    if (!wasVisible && !get().heightGrid) {
+      get().fetchHeightData();
+    }
+  },
+
+  fetchTemperatureData: async () => {
+    const { selectedRunTime, selectedForecastHour, selectedLevel } = get();
+    set({ temperatureLoading: true, temperatureError: null });
+    try {
+      const params = new URLSearchParams({
+        parameter: 'TMP',
+        level_hpa: String(selectedLevel),
+        forecast_hour: String(selectedForecastHour),
+        thin: '2',
+      });
+      if (selectedRunTime) params.set('run_time', selectedRunTime);
+      const res = await fetch(`/api/gridded?${params}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      set({ temperatureGrid: data, temperatureLoading: false });
+    } catch (err) {
+      set({
+        temperatureError: err instanceof Error ? err.message : 'Unknown error',
+        temperatureLoading: false,
+      });
+    }
+  },
+
+  fetchHeightData: async () => {
+    const { selectedRunTime, selectedForecastHour, selectedLevel } = get();
+    set({ heightLoading: true, heightError: null });
+    try {
+      const params = new URLSearchParams({
+        parameter: 'HGT',
+        level_hpa: String(selectedLevel),
+        forecast_hour: String(selectedForecastHour),
+        thin: '2',
+      });
+      if (selectedRunTime) params.set('run_time', selectedRunTime);
+      const res = await fetch(`/api/gridded?${params}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      set({ heightGrid: data, heightLoading: false });
+    } catch (err) {
+      set({
+        heightError: err instanceof Error ? err.message : 'Unknown error',
+        heightLoading: false,
+      });
+    }
+  },
 
   fetchMeta: async () => {
     set({ metaLoading: true });
@@ -160,16 +251,31 @@ export const useAppStore = create<AppState>((set, get) => ({
     }
     set(updates);
     get().fetchWindData();
+    // Clear cached grids
+    set({ temperatureGrid: null, heightGrid: null });
+    // Refetch visible layers
+    if (get().temperatureVisible) get().fetchTemperatureData();
+    if (get().heightVisible) get().fetchHeightData();
   },
 
   setForecastHour: (h: number) => {
     set({ selectedForecastHour: h });
     get().fetchWindData();
+    // Clear cached grids
+    set({ temperatureGrid: null, heightGrid: null });
+    // Refetch visible layers
+    if (get().temperatureVisible) get().fetchTemperatureData();
+    if (get().heightVisible) get().fetchHeightData();
   },
 
   setLevel: (l: number) => {
     set({ selectedLevel: l });
     get().fetchWindData();
+    // Clear cached grids
+    set({ temperatureGrid: null, heightGrid: null });
+    // Refetch visible layers
+    if (get().temperatureVisible) get().fetchTemperatureData();
+    if (get().heightVisible) get().fetchHeightData();
   },
 
   toggleWind: () => set((s) => ({ windVisible: !s.windVisible })),
