@@ -113,7 +113,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       const params = new URLSearchParams({
         level_hpa: String(selectedLevel),
         forecast_hour: String(selectedForecastHour),
-        thin: '4',
+        thin: '8',
       });
       if (selectedRunTime) {
         params.set('run_time', selectedRunTime);
