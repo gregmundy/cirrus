@@ -79,13 +79,13 @@ export function generateWindBarbSVG(speedKt: number, mirror: boolean = false): s
   if (speedKt < 2.5) {
     // Calm: circle
     return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}">
-      <circle cx="${cx}" cy="${size / 2}" r="4" fill="none" stroke="#000" stroke-width="2"/>
+      <circle cx="${cx}" cy="${size / 2}" r="4" fill="none" stroke="#1a5fad" stroke-width="2"/>
     </svg>`;
   }
 
   const paths: string[] = [];
   // Staff line
-  paths.push(`<line x1="${cx}" y1="${staffTop}" x2="${cx}" y2="${staffBottom}" stroke="#000" stroke-width="2" stroke-linecap="round"/>`);
+  paths.push(`<line x1="${cx}" y1="${staffTop}" x2="${cx}" y2="${staffBottom}" stroke="#1a5fad" stroke-width="2" stroke-linecap="round"/>`);
 
   let remaining = Math.round(speedKt / 5) * 5;
   let y = staffTop; // Start from top of staff
@@ -96,7 +96,7 @@ export function generateWindBarbSVG(speedKt: number, mirror: boolean = false): s
   while (remaining >= 50) {
     const x1 = cx;
     const x2 = cx + side * barbLength;
-    paths.push(`<polygon points="${x1},${y} ${x2},${y + spacing / 2} ${x1},${y + spacing}" fill="#000" stroke="#000" stroke-width="1"/>`);
+    paths.push(`<polygon points="${x1},${y} ${x2},${y + spacing / 2} ${x1},${y + spacing}" fill="#1a5fad" stroke="#1a5fad" stroke-width="1"/>`);
     y += spacing + 2;
     remaining -= 50;
   }
@@ -104,7 +104,7 @@ export function generateWindBarbSVG(speedKt: number, mirror: boolean = false): s
   // Full barbs (10 kt)
   while (remaining >= 10) {
     const x2 = cx + side * barbLength;
-    paths.push(`<line x1="${cx}" y1="${y}" x2="${x2}" y2="${y - 4}" stroke="#000" stroke-width="2" stroke-linecap="round"/>`);
+    paths.push(`<line x1="${cx}" y1="${y}" x2="${x2}" y2="${y - 4}" stroke="#1a5fad" stroke-width="2" stroke-linecap="round"/>`);
     y += spacing;
     remaining -= 10;
   }
@@ -112,7 +112,7 @@ export function generateWindBarbSVG(speedKt: number, mirror: boolean = false): s
   // Half barb (5 kt)
   if (remaining >= 5) {
     const x2 = cx + side * (barbLength * 0.6);
-    paths.push(`<line x1="${cx}" y1="${y}" x2="${x2}" y2="${y - 3}" stroke="#000" stroke-width="2" stroke-linecap="round"/>`);
+    paths.push(`<line x1="${cx}" y1="${y}" x2="${x2}" y2="${y - 3}" stroke="#1a5fad" stroke-width="2" stroke-linecap="round"/>`);
   }
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}">${paths.join('')}</svg>`;
