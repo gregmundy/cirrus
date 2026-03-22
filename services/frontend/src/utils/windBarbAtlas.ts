@@ -6,20 +6,19 @@ const TOTAL_ICONS = 41; // calm + 5,10,...,200
 const COLS = 10;
 const ROWS = Math.ceil(TOTAL_ICONS / COLS);
 
-let cachedAtlasUrl: string | null = null;
-let cachedMapping: WindBarbMapping | null = null;
+// No caching during debug — always regenerate
+// let cachedAtlas: HTMLCanvasElement | null = null;
+// let cachedMapping: WindBarbMapping | null = null;
 
 /**
- * Generate the wind barb sprite atlas as a data URL and icon mapping.
+ * Generate the wind barb sprite atlas as a canvas and icon mapping.
  * Results are cached — subsequent calls return the same objects.
  */
 export async function getWindBarbAtlas(): Promise<{
-  atlas: string;
+  atlas: HTMLCanvasElement;
   mapping: WindBarbMapping;
 }> {
-  if (cachedAtlasUrl && cachedMapping) {
-    return { atlas: cachedAtlasUrl, mapping: cachedMapping };
-  }
+  console.log('[windBarbAtlas] getWindBarbAtlas called');
 
   const canvas = document.createElement('canvas');
   canvas.width = COLS * ICON_SIZE;
@@ -28,6 +27,12 @@ export async function getWindBarbAtlas(): Promise<{
 
   // Generate and render each SVG to the atlas
   const speeds = [0, ...Array.from({ length: 40 }, (_, i) => (i + 1) * 5)];
+
+  let loadedCount = 0;
+  let errorCount = 0;
+
+  // Debug: log first SVG
+  console.log('[windBarbAtlas] Sample SVG (10kt):', generateWindBarbSVG(10));
 
   const loadPromises = speeds.map((speed, index) => {
     const svg = generateWindBarbSVG(speed);
@@ -43,20 +48,24 @@ export async function getWindBarbAtlas(): Promise<{
         const row = Math.floor(index / COLS);
         ctx.drawImage(img, col * ICON_SIZE, row * ICON_SIZE, ICON_SIZE, ICON_SIZE);
         URL.revokeObjectURL(url);
+        loadedCount++;
         resolve();
       };
       img.onerror = () => {
         URL.revokeObjectURL(url);
-        resolve(); // skip failed icons
+        errorCount++;
+        console.warn(`[windBarbAtlas] Failed to load SVG for speed ${speed}`);
+        resolve();
       };
       img.src = url;
     });
   });
 
   await Promise.all(loadPromises);
+  console.log(`[windBarbAtlas] Atlas generated: ${loadedCount} loaded, ${errorCount} errors, canvas ${canvas.width}x${canvas.height}`);
 
-  cachedAtlasUrl = canvas.toDataURL('image/png');
+  cachedAtlas = canvas;
   cachedMapping = generateWindBarbMapping();
 
-  return { atlas: cachedAtlasUrl, mapping: cachedMapping };
+  return { atlas: cachedAtlas, mapping: cachedMapping };
 }

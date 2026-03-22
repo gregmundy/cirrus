@@ -35,6 +35,7 @@ struct GriddedRow {
     ni: i32,
     nj: i32,
     lat_first: f64,
+    lat_last: f64,
     lon_first: f64,
     d_lat: f64,
     d_lon: f64,
@@ -63,7 +64,7 @@ pub async fn get_wind(
 
     // Fetch UGRD
     let u_row = sqlx::query_as::<_, GriddedRow>(
-        "SELECT run_time, valid_time, ni, nj, lat_first, lon_first, d_lat, d_lon, values \
+        "SELECT run_time, valid_time, ni, nj, lat_first, lat_last, lon_first, d_lat, d_lon, values \
          FROM gridded_fields \
          WHERE parameter = 'UGRD' AND level_hpa = $1 AND forecast_hour = $2 AND run_time = $3"
     )
@@ -77,7 +78,7 @@ pub async fn get_wind(
 
     // Fetch VGRD
     let v_row = sqlx::query_as::<_, GriddedRow>(
-        "SELECT run_time, valid_time, ni, nj, lat_first, lon_first, d_lat, d_lon, values \
+        "SELECT run_time, valid_time, ni, nj, lat_first, lat_last, lon_first, d_lat, d_lon, values \
          FROM gridded_fields \
          WHERE parameter = 'VGRD' AND level_hpa = $1 AND forecast_hour = $2 AND run_time = $3"
     )
@@ -96,6 +97,15 @@ pub async fn get_wind(
     let ni = u_row.ni as usize;
     let nj = u_row.nj as usize;
 
+    // ecCodes jDirectionIncrementInDegrees is always positive.
+    // Determine actual sign from grid direction (N→S means negative d_lat).
+    let d_lat = if u_row.lat_first > u_row.lat_last {
+        -u_row.d_lat.abs()
+    } else {
+        u_row.d_lat.abs()
+    };
+    let d_lon = u_row.d_lon;
+
     // Build thinned output arrays
     let mut lats = Vec::new();
     let mut lons = Vec::new();
@@ -112,9 +122,8 @@ pub async fn get_wind(
             let u = u_vals[idx] as f64;
             let v = v_vals[idx] as f64;
 
-            let lat = u_row.lat_first + (j as f64) * u_row.d_lat;
-            // Handle grids that go N→S (d_lat negative) vs S→N
-            let lon = u_row.lon_first + (i as f64) * u_row.d_lon;
+            let lat = u_row.lat_first + (j as f64) * d_lat;
+            let lon = u_row.lon_first + (i as f64) * d_lon;
 
             let speed_ms = (u * u + v * v).sqrt();
             let speed_kt = (speed_ms * 1.94384) as f32;

@@ -5,7 +5,7 @@ import type { WindPoint } from '../../stores/appStore';
 
 export function createWindBarbLayer(
   data: WindPoint[],
-  iconAtlas: string,
+  iconAtlas: HTMLCanvasElement | string,
   iconMapping: WindBarbMapping,
 ): IconLayer<WindPoint> {
   return new IconLayer<WindPoint>({
