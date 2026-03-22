@@ -1,5 +1,6 @@
 mod gridded;
 mod meta;
+mod opmet;
 mod wind;
 
 use axum::{routing::get, Json, Router};
@@ -39,6 +40,7 @@ async fn main() {
         .route("/api/wind", get(wind::get_wind))
         .route("/api/gridded", get(gridded::get_gridded))
         .route("/api/gridded/meta", get(meta::get_meta))
+        .route("/api/opmet/stations", get(opmet::get_stations))
         .with_state(pool);
 
     let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{PORT}"))
