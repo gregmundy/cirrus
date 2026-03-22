@@ -6,6 +6,8 @@ pub struct Config {
     pub poll_interval_secs: u64,
     pub retention_hours: i64,
     pub grib_store_path: String,
+    pub metar_cache_url: String,
+    pub metar_poll_interval_secs: u64,
 }
 
 impl Config {
@@ -24,6 +26,12 @@ impl Config {
                 .expect("RETENTION_HOURS must be a number"),
             grib_store_path: env::var("GRIB_STORE_PATH")
                 .unwrap_or_else(|_| "/data/grib".into()),
+            metar_cache_url: env::var("METAR_CACHE_URL")
+                .unwrap_or_else(|_| "https://aviationweather.gov/data/cache/metars.cache.csv".to_string()),
+            metar_poll_interval_secs: env::var("METAR_POLL_INTERVAL_SECS")
+                .ok()
+                .and_then(|v| v.parse().ok())
+                .unwrap_or(300),
         }
     }
 }

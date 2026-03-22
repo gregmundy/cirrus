@@ -1,6 +1,7 @@
 mod config;
 mod cycle;
 mod db;
+mod metar;
 mod nomads;
 
 use axum::{extract::State, routing::{get, post}, Json, Router};
@@ -110,6 +111,20 @@ async fn download_cycle(state: &AppState, run_time: DateTime<Utc>) -> Result<(),
     Ok(())
 }
 
+async fn metar_polling_loop(state: Arc<AppState>) {
+    tokio::time::sleep(Duration::from_secs(10)).await;
+
+    let mut ticker = interval(Duration::from_secs(state.config.metar_poll_interval_secs));
+    loop {
+        ticker.tick().await;
+        tracing::info!("Fetching METAR cache from AWC...");
+        match metar::fetch_and_store(&state.client, &state.pool, &state.config.metar_cache_url).await {
+            Ok(count) => tracing::info!("Ingested {count} new METAR(s)"),
+            Err(e) => tracing::error!("METAR fetch failed: {e}"),
+        }
+    }
+}
+
 async fn polling_loop(state: Arc<AppState>) {
     let mut ticker = interval(Duration::from_secs(state.config.poll_interval_secs));
     loop {
@@ -155,6 +170,11 @@ async fn main() {
     let poll_state = state.clone();
     tokio::spawn(async move {
         polling_loop(poll_state).await;
+    });
+
+    let metar_state = state.clone();
+    tokio::spawn(async move {
+        metar_polling_loop(metar_state).await;
     });
 
     let app = Router::new()

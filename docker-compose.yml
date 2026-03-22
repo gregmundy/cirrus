@@ -29,6 +29,8 @@ services:
       POLL_INTERVAL_SECS: ${POLL_INTERVAL_SECS:-300}
       RETENTION_HOURS: ${RETENTION_HOURS:-48}
       GRIB_STORE_PATH: ${GRIB_STORE_PATH:-/data/grib}
+      METAR_CACHE_URL: ${METAR_CACHE_URL:-https://aviationweather.gov/data/cache/metars.cache.csv}
+      METAR_POLL_INTERVAL_SECS: ${METAR_POLL_INTERVAL_SECS:-300}
     depends_on:
       postgres:
         condition: service_healthy
