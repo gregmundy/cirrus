@@ -1,9 +1,12 @@
+import json
 import logging
 import os
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from threading import Thread
 
 import psycopg
+
+from cirrus.decoder import db, grib_decoder
 
 SERVICE_NAME = "decoder"
 PORT = 8090
@@ -22,7 +25,7 @@ class HealthHandler(BaseHTTPRequestHandler):
             self.end_headers()
 
     def log_message(self, format, *args):
-        pass  # suppress default logging
+        pass
 
 
 def start_health_server():
@@ -30,28 +33,78 @@ def start_health_server():
     server.serve_forever()
 
 
+def handle_notification(conn: psycopg.Connection, payload: str) -> None:
+    """Process a single decoder_jobs notification."""
+    try:
+        data = json.loads(payload)
+    except json.JSONDecodeError:
+        logger.error("Invalid JSON in notification payload: %s", payload)
+        return
+
+    download_id = data.get("download_id")
+    file_path = data.get("file_path")
+    if download_id is None or file_path is None:
+        logger.error("Missing fields in notification payload: %s", payload)
+        return
+
+    logger.info("Processing download_id=%d file=%s", download_id, file_path)
+
+    info = db.get_download_info(conn, download_id)
+    if info is None:
+        logger.error("Download ID %d not found in database", download_id)
+        return
+
+    if not os.path.exists(file_path):
+        logger.error("GRIB2 file not found: %s", file_path)
+        return
+
+    fields = grib_decoder.decode_file(
+        file_path, download_id, info["run_time"], info["forecast_hour"]
+    )
+
+    if not fields:
+        logger.warning("No fields decoded from %s", file_path)
+        return
+
+    count = db.insert_fields(conn, fields)
+    logger.info("Inserted %d field(s) for download_id=%d", count, download_id)
+
+    db.mark_decoded(conn, download_id)
+    logger.info("Marked download_id=%d as decoded", download_id)
+
+
 def main():
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(levelname)s %(message)s")
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s %(name)s %(levelname)s %(message)s",
+    )
 
     database_url = os.environ["DATABASE_URL"]
 
     conn = psycopg.connect(database_url, autocommit=True)
-    logger.info(f"{SERVICE_NAME} connected to database")
+    logger.info("%s connected to database", SERVICE_NAME)
 
-    # Start health check server in background thread
     health_thread = Thread(target=start_health_server, daemon=True)
     health_thread.start()
-    logger.info(f"{SERVICE_NAME} health server on port {PORT}")
+    logger.info("%s health server on port %d", SERVICE_NAME, PORT)
 
-    # Listen for notifications (no handlers yet)
-    conn.execute(f"LISTEN {SERVICE_NAME}_jobs")
-    logger.info(f"{SERVICE_NAME} listening for notifications on {SERVICE_NAME}_jobs")
+    conn.execute("LISTEN decoder_jobs")
+    logger.info("%s listening for notifications on decoder_jobs", SERVICE_NAME)
 
+    # Process any un-decoded downloads from before this process started
+    unprocessed = conn.execute(
+        "SELECT id, file_path FROM grib_downloads WHERE decoded = FALSE ORDER BY id"
+    ).fetchall()
+    for row in unprocessed:
+        download_id, file_path = row
+        logger.info("Processing backlog: download_id=%d", download_id)
+        handle_notification(conn, json.dumps({"download_id": download_id, "file_path": file_path}))
+
+    # Main notification loop
     while True:
-        # Wait for notifications, timeout every 5s to keep the loop alive
         gen = conn.notifies(timeout=5.0)
         for notify in gen:
-            logger.info(f"Received notification: {notify.channel} -> {notify.payload}")
+            handle_notification(conn, notify.payload)
 
 
 if __name__ == "__main__":
