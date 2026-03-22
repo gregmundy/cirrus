@@ -81,30 +81,35 @@ def main():
 
     database_url = os.environ["DATABASE_URL"]
 
-    conn = psycopg.connect(database_url, autocommit=True)
+    # Two connections: one for LISTEN (must stay idle), one for queries/inserts.
+    # psycopg3's conn.notifies() holds the connection in a notification-listening
+    # state — calling conn.execute() on the same connection inside the generator
+    # loop will deadlock.
+    listen_conn = psycopg.connect(database_url, autocommit=True)
+    work_conn = psycopg.connect(database_url, autocommit=True)
     logger.info("%s connected to database", SERVICE_NAME)
 
     health_thread = Thread(target=start_health_server, daemon=True)
     health_thread.start()
     logger.info("%s health server on port %d", SERVICE_NAME, PORT)
 
-    conn.execute("LISTEN decoder_jobs")
+    listen_conn.execute("LISTEN decoder_jobs")
     logger.info("%s listening for notifications on decoder_jobs", SERVICE_NAME)
 
     # Process any un-decoded downloads from before this process started
-    unprocessed = conn.execute(
+    unprocessed = work_conn.execute(
         "SELECT id, file_path FROM grib_downloads WHERE decoded = FALSE ORDER BY id"
     ).fetchall()
     for row in unprocessed:
         download_id, file_path = row
         logger.info("Processing backlog: download_id=%d", download_id)
-        handle_notification(conn, json.dumps({"download_id": download_id, "file_path": file_path}))
+        handle_notification(work_conn, json.dumps({"download_id": download_id, "file_path": file_path}))
 
     # Main notification loop
     while True:
-        gen = conn.notifies(timeout=5.0)
+        gen = listen_conn.notifies(timeout=5.0)
         for notify in gen:
-            handle_notification(conn, notify.payload)
+            handle_notification(work_conn, notify.payload)
 
 
 if __name__ == "__main__":
