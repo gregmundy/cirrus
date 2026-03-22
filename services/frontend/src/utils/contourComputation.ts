@@ -16,6 +16,8 @@ export interface ComputeContourOptions {
   interval: number;
   upsampleFactor?: number;
   splitOnLonWrap?: boolean;
+  /** Gaussian smoothing radius in grid cells (0 = no smoothing). */
+  smoothingRadius?: number;
 }
 
 /**
@@ -75,6 +77,63 @@ function interpolateArray(arr: number[], newLen: number): number[] {
 }
 
 /**
+ * Apply Gaussian smoothing to a 2D grid.
+ * Uses separable 1D passes for efficiency.
+ */
+function gaussianSmooth(
+  values: number[] | Float32Array,
+  ni: number,
+  nj: number,
+  radius: number,
+): number[] {
+  if (radius <= 0) return Array.from(values);
+
+  // Build 1D Gaussian kernel
+  const kernelSize = Math.ceil(radius * 3) * 2 + 1;
+  const half = (kernelSize - 1) / 2;
+  const kernel = new Float64Array(kernelSize);
+  let sum = 0;
+  for (let i = 0; i < kernelSize; i++) {
+    const x = i - half;
+    kernel[i] = Math.exp(-0.5 * (x / radius) * (x / radius));
+    sum += kernel[i];
+  }
+  for (let i = 0; i < kernelSize; i++) kernel[i] /= sum;
+
+  // Horizontal pass
+  const horiz = new Float64Array(ni * nj);
+  for (let j = 0; j < nj; j++) {
+    for (let i = 0; i < ni; i++) {
+      let acc = 0;
+      let wt = 0;
+      for (let k = 0; k < kernelSize; k++) {
+        const ii = Math.min(Math.max(i + k - half, 0), ni - 1);
+        acc += values[j * ni + ii] * kernel[k];
+        wt += kernel[k];
+      }
+      horiz[j * ni + i] = acc / wt;
+    }
+  }
+
+  // Vertical pass
+  const result = new Array(ni * nj);
+  for (let j = 0; j < nj; j++) {
+    for (let i = 0; i < ni; i++) {
+      let acc = 0;
+      let wt = 0;
+      for (let k = 0; k < kernelSize; k++) {
+        const jj = Math.min(Math.max(j + k - half, 0), nj - 1);
+        acc += horiz[jj * ni + i] * kernel[k];
+        wt += kernel[k];
+      }
+      result[j * ni + i] = acc / wt;
+    }
+  }
+
+  return result;
+}
+
+/**
  * Compute contour lines and labels from raw gridded data using d3-contour
  * (marching squares). This is a pure computation function with no rendering
  * dependencies.
@@ -99,6 +158,7 @@ export function computeContourLines(
     interval,
     upsampleFactor = 4,
     splitOnLonWrap = true,
+    smoothingRadius = 2,
   } = options;
 
   // Optionally convert values
@@ -113,8 +173,13 @@ export function computeContourLines(
     converted = rawValues;
   }
 
+  // Apply Gaussian smoothing before upsampling (suppresses grid-scale noise)
+  const smoothed = smoothingRadius > 0
+    ? gaussianSmooth(converted, ni, nj, smoothingRadius)
+    : converted;
+
   // Upsample the grid for smoother contours
-  const up = bilinearUpsample(converted, ni, nj, upsampleFactor);
+  const up = bilinearUpsample(smoothed, ni, nj, upsampleFactor);
   const upNi = up.ni;
   const upNj = up.nj;
   const upLats = interpolateArray(lats, upNj);
