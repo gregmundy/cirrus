@@ -121,9 +121,12 @@ export function createHeightLayers(data: GriddedData, levelHpa: number): Layer[]
     );
   }
 
-  // H/L extrema detection
+  // H/L extrema detection — use large influence radius and separation
+  // to detect only synoptic-scale features (major ridges/troughs)
   const { highs, lows } = findExtrema(
     data.ni, data.nj, data.lats, data.lons, data.values,
+    30,  // influenceRadius: 30 grid points = ~15° at thin=2
+    25,  // minSeparationDeg: suppress H/L within 25° of a stronger one
   );
 
   const extremaData = [

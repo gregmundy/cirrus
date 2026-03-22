@@ -109,21 +109,38 @@ pub async fn get_gridded(
         j += thin;
     }
 
-    // Compute thinned lon array
-    let mut i_indices = Vec::new();
+    // Compute thinned lon indices and values, reordered so lons are
+    // monotonically increasing from -180 to ~180. The raw GFS grid starts
+    // at lon 0, so we find the split point where lon > 180 and rotate.
+    let mut raw_i_indices = Vec::new();
+    let mut raw_lons = Vec::new();
     let mut i = 0usize;
     while i < raw_ni {
-        let mut lon = row.lon_first + (i as f64) * row.d_lon;
-        if lon > 180.0 { lon -= 360.0; }
-        lons.push(lon as f32);
-        i_indices.push(i);
+        let lon = row.lon_first + (i as f64) * row.d_lon;
+        raw_i_indices.push(i);
+        raw_lons.push(lon);
         i += thin;
+    }
+
+    // Find the split point: first index where lon > 180
+    let split = raw_lons.iter().position(|&lon| lon > 180.0).unwrap_or(raw_lons.len());
+
+    // Reorder: [split..end] (wrapped to negative) then [0..split]
+    let mut i_indices = Vec::new();
+    for idx in split..raw_lons.len() {
+        lons.push((raw_lons[idx] - 360.0) as f32);
+        i_indices.push(raw_i_indices[idx]);
+    }
+    for idx in 0..split {
+        lons.push(raw_lons[idx] as f32);
+        i_indices.push(raw_i_indices[idx]);
     }
 
     let out_ni = i_indices.len();
     let out_nj = j_indices.len();
 
     // Extract thinned values in row-major order (j outer, i inner)
+    // using the reordered column indices
     for &jj in &j_indices {
         for &ii in &i_indices {
             let idx = jj * raw_ni + ii;
