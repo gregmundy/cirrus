@@ -173,7 +173,7 @@ export default function MapView() {
         data: filtered,
         getPosition: (d) => [d.lon, d.lat],
         getIcon: (d) => getWindBarbKey(d.speed),
-        getAngle: (d) => -d.direction,
+        getAngle: (d) => d.direction,
         getSize: 40,
         iconAtlas: atlasUrl,
         iconMapping: iconMapping as Record<string, { x: number; y: number; width: number; height: number }>,
