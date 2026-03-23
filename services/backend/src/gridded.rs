@@ -14,6 +14,7 @@ pub struct GriddedQuery {
     forecast_hour: i32,
     run_time: Option<DateTime<Utc>>,
     thin: Option<usize>,
+    level_type: Option<String>,
 }
 
 #[derive(Serialize)]
@@ -65,17 +66,32 @@ pub async fn get_gridded(
     };
 
     // Fetch the gridded field
-    let row = sqlx::query_as::<_, GridRow>(
-        "SELECT run_time, valid_time, ni, nj, lat_first, lat_last, lon_first, d_lat, d_lon, values \
-         FROM gridded_fields \
-         WHERE parameter = $1 AND level_hpa = $2 AND forecast_hour = $3 AND run_time = $4"
-    )
-    .bind(&params.parameter)
-    .bind(params.level_hpa)
-    .bind(params.forecast_hour)
-    .bind(run_time)
-    .fetch_optional(&pool)
-    .await
+    let row = if let Some(ref lt) = params.level_type {
+        sqlx::query_as::<_, GridRow>(
+            "SELECT run_time, valid_time, ni, nj, lat_first, lat_last, lon_first, d_lat, d_lon, values \
+             FROM gridded_fields \
+             WHERE parameter = $1 AND level_hpa = $2 AND forecast_hour = $3 AND run_time = $4 AND level_type = $5"
+        )
+        .bind(&params.parameter)
+        .bind(params.level_hpa)
+        .bind(params.forecast_hour)
+        .bind(run_time)
+        .bind(lt)
+        .fetch_optional(&pool)
+        .await
+    } else {
+        sqlx::query_as::<_, GridRow>(
+            "SELECT run_time, valid_time, ni, nj, lat_first, lat_last, lon_first, d_lat, d_lon, values \
+             FROM gridded_fields \
+             WHERE parameter = $1 AND level_hpa = $2 AND forecast_hour = $3 AND run_time = $4"
+        )
+        .bind(&params.parameter)
+        .bind(params.level_hpa)
+        .bind(params.forecast_hour)
+        .bind(run_time)
+        .fetch_optional(&pool)
+        .await
+    }
     .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
     .ok_or(StatusCode::NOT_FOUND)?;
 
