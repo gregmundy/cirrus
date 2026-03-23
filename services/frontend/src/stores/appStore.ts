@@ -429,12 +429,18 @@ export const useAppStore = create<AppState>((set, get) => ({
       const ni = uniqueLons.length;
       const nj = uniqueLats.length;
 
+      // Build lookup maps for O(1) index resolution
+      const latIndex = new Map<number, number>();
+      uniqueLats.forEach((v, i) => latIndex.set(v, i));
+      const lonIndex = new Map<number, number>();
+      uniqueLons.forEach((v, i) => lonIndex.set(v, i));
+
       // Build a 2D grid of speeds (row-major: nj rows of ni columns)
       const gridSpeeds = new Array(nj * ni).fill(0);
       for (let k = 0; k < data.count; k++) {
-        const jIdx = uniqueLats.indexOf(data.lats[k]);
-        const iIdx = uniqueLons.indexOf(data.lons[k]);
-        if (jIdx >= 0 && iIdx >= 0) {
+        const jIdx = latIndex.get(data.lats[k]);
+        const iIdx = lonIndex.get(data.lons[k]);
+        if (jIdx !== undefined && iIdx !== undefined) {
           gridSpeeds[jIdx * ni + iIdx] = speeds[k];
         }
       }
