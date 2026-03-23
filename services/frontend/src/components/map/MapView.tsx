@@ -7,8 +7,8 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import { useAppStore, windBarbStride } from '../../stores/appStore';
 import type { WindPoint } from '../../stores/appStore';
 import { getWindBarbKey, generateWindBarbMapping } from '../../utils/windBarbs';
-import { getWindBarbAtlas, getStationWindBarbAtlas } from '../../utils/windBarbAtlas';
-import { createTemperatureLayers, createHeightLayers, createHumidityLayers } from './ContourLayer';
+import { getWindBarbAtlas, getStationWindBarbAtlas, getJetWindBarbAtlas } from '../../utils/windBarbAtlas';
+import { createTemperatureLayers, createHeightLayers, createHumidityLayers, createTropopauseLayers, createMaxWindIsotachLayers } from './ContourLayer';
 import { createStationDotsLayer, createStationLabelsLayer, createStationModelLayers } from './StationLayer';
 import { getStationModelAtlas } from '../../utils/stationModelAtlas';
 import type { StationModelMapping } from '../../utils/stationModelAtlas';
@@ -24,6 +24,7 @@ export default function MapView() {
   const [stationBarbMapping, setStationBarbMapping] = useState<Record<string, { x: number; y: number; width: number; height: number; anchorY: number }> | null>(null);
   const [coverAtlasUrl, setCoverAtlasUrl] = useState<string | null>(null);
   const [coverIconMapping, setCoverIconMapping] = useState<StationModelMapping | null>(null);
+  const [jetBarbAtlasUrl, setJetBarbAtlasUrl] = useState<string | null>(null);
   const iconMapping = useMemo(() => generateWindBarbMapping(), []);
   const [selectedStation, setSelectedStation] = useState<{
     obs: StationObs; x: number; y: number;
@@ -52,6 +53,11 @@ export default function MapView() {
   const stationData = useAppStore((s) => s.stationData);
   const stationVisible = useAppStore((s) => s.stationVisible);
   const fetchStationData = useAppStore((s) => s.fetchStationData);
+  const tropopauseContours = useAppStore((s) => s.tropopauseContours);
+  const tropopauseVisible = useAppStore((s) => s.tropopauseVisible);
+  const maxWindContours = useAppStore((s) => s.maxWindContours);
+  const maxWindVisible = useAppStore((s) => s.maxWindVisible);
+  const maxWindBarbs = useAppStore((s) => s.maxWindBarbs);
 
   const handleWindHover = useCallback((info: { object?: WindPoint; x: number; y: number }) => {
     if (info.object) {
@@ -71,6 +77,7 @@ export default function MapView() {
   // Generate icon atlases asynchronously
   useEffect(() => {
     getWindBarbAtlas().then(({ atlas }) => setAtlasUrl(atlas));
+    getJetWindBarbAtlas().then(({ atlas }) => setJetBarbAtlasUrl(atlas));
     getStationWindBarbAtlas().then(({ atlas, mapping }) => {
       setStationBarbAtlasUrl(atlas);
       setStationBarbMapping(mapping);
@@ -185,6 +192,11 @@ export default function MapView() {
       layers.push(...createHeightLayers(heightContours));
     }
 
+    // Tropopause contours (dotted blue lines)
+    if (tropopauseVisible && tropopauseContours) {
+      layers.push(...createTropopauseLayers(tropopauseContours));
+    }
+
     // Humidity contours
     if (humidityVisible && humidityContours) {
       layers.push(...createHumidityLayers(humidityContours));
@@ -193,6 +205,34 @@ export default function MapView() {
     // Temperature contours
     if (temperatureVisible && temperatureContours) {
       layers.push(...createTemperatureLayers(temperatureContours));
+    }
+
+    // Max wind isotach contours (green lines)
+    if (maxWindVisible && maxWindContours) {
+      layers.push(...createMaxWindIsotachLayers(maxWindContours));
+    }
+
+    // Max wind barbs (green, >= 60kt)
+    if (maxWindVisible && maxWindBarbs.length > 0 && jetBarbAtlasUrl) {
+      const jetStride = windBarbStride(mapZoom);
+      const filteredJetBarbs = jetStride === 1
+        ? maxWindBarbs
+        : maxWindBarbs.filter((_, i) => i % jetStride === 0);
+
+      layers.push(new IconLayer({
+        id: 'maxwind-barbs',
+        data: filteredJetBarbs,
+        getPosition: (d) => [d.lon, d.lat],
+        getIcon: (d) => getWindBarbKey(d.speed),
+        getAngle: (d) => d.direction,
+        getSize: 40,
+        iconAtlas: jetBarbAtlasUrl,
+        iconMapping: iconMapping as Record<string, { x: number; y: number; width: number; height: number }>,
+        sizeUnits: 'pixels',
+        sizeMinPixels: 20,
+        sizeMaxPixels: 50,
+        pickable: false,
+      }));
     }
 
     // Wind barbs (top)
@@ -242,7 +282,7 @@ export default function MapView() {
     }
 
     overlayRef.current.setProps({ layers });
-  }, [windData, windVisible, mapZoom, atlasUrl, stationBarbAtlasUrl, coverAtlasUrl, coverIconMapping, iconMapping, handleWindHover, temperatureContours, temperatureVisible, heightContours, heightVisible, humidityContours, humidityVisible, stationData, stationVisible]);
+  }, [windData, windVisible, mapZoom, atlasUrl, stationBarbAtlasUrl, coverAtlasUrl, coverIconMapping, iconMapping, handleWindHover, temperatureContours, temperatureVisible, heightContours, heightVisible, humidityContours, humidityVisible, stationData, stationVisible, tropopauseContours, tropopauseVisible, maxWindContours, maxWindVisible, maxWindBarbs, jetBarbAtlasUrl]);
 
   return (
     <>
