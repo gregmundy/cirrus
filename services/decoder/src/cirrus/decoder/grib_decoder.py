@@ -18,6 +18,7 @@ PARAM_MAP = {
 }
 
 TROPOPAUSE_SURFACE_TYPE = 7
+MAX_WIND_SURFACE_TYPE = 6
 
 
 def decode_file(filepath: str, download_id: int, run_time: datetime, forecast_hour: int) -> list[dict]:
@@ -54,6 +55,9 @@ def _extract_field(msgid: int, download_id: int, run_time: datetime, forecast_ho
     if level_type_int == TROPOPAUSE_SURFACE_TYPE:
         level_hpa = -1
         level_type = "tropopause"
+    elif level_type_int == MAX_WIND_SURFACE_TYPE:
+        level_hpa = -1
+        level_type = "maxwind"
     else:
         level_hpa = eccodes.codes_get(msgid, "level")
         level_type = "isobaricInhPa"

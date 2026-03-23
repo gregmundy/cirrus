@@ -17,6 +17,9 @@ decode = [
     "shapely>=2.0",
     "numpy>=2.0",
 ]
+test = [
+    "pytest>=7.0",
+]
 
 [project.scripts]
 cirrus-decoder = "cirrus.decoder.main:main"
