@@ -231,7 +231,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   toggleStations: () => {
     const wasVisible = get().stationVisible;
     set({ stationVisible: !wasVisible });
-    if (!wasVisible && get().stationData.length === 0) {
+    if (!wasVisible) {
       get().fetchStationData();
     }
   },
