@@ -26,6 +26,7 @@ export interface StationObs {
   temp_c: number | null;
   dewpoint_c: number | null;
   altimeter_inhg: number | null;
+  slp_hpa: number | null;
   latitude: number;
   longitude: number;
 }

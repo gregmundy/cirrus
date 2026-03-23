@@ -18,6 +18,7 @@ struct MetarRow {
     temp_c: Option<f32>,
     dewpoint_c: Option<f32>,
     altimeter: Option<f32>,
+    slp_hpa: Option<f32>,
 }
 
 pub async fn fetch_and_store(
@@ -77,6 +78,7 @@ fn parse_csv_record(record: &csv::StringRecord) -> Option<MetarRow> {
     let wind_gust = record.get(9).and_then(|s| s.trim().parse().ok());
     let visibility_sm = record.get(10).and_then(|s| s.trim().parse().ok());
     let altimeter = record.get(11).and_then(|s| s.trim().parse().ok());
+    let slp_hpa: Option<f32> = record.get(12).and_then(|s| s.trim().parse().ok());
     let wx_string = record.get(21).map(|s| s.trim().to_string()).filter(|s| !s.is_empty());
 
     let mut ceiling_ft: Option<i32> = None;
@@ -101,7 +103,7 @@ fn parse_csv_record(record: &csv::StringRecord) -> Option<MetarRow> {
         station, observation_time, raw_text, latitude, longitude,
         flight_category, wind_dir, wind_speed, wind_gust,
         visibility_sm, wx_string, sky_cover: lowest_cover, ceiling_ft,
-        temp_c, dewpoint_c, altimeter,
+        temp_c, dewpoint_c, altimeter, slp_hpa,
     })
 }
 
@@ -138,8 +140,8 @@ async fn insert_metars(pool: &PgPool, rows: &[MetarRow]) -> Result<usize, String
                 observation_time, station, report_type, raw_text,
                 flight_category, wind_dir_degrees, wind_speed_kt, wind_gust_kt,
                 visibility_sm, wx_string, sky_cover, ceiling_ft,
-                temp_c, dewpoint_c, altimeter_inhg, latitude, longitude
-            ) VALUES ($1, $2, 'METAR', $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+                temp_c, dewpoint_c, altimeter_inhg, slp_hpa, latitude, longitude
+            ) VALUES ($1, $2, 'METAR', $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
             ON CONFLICT (station, observation_time, report_type) DO NOTHING"
         )
         .bind(row.observation_time)
@@ -156,6 +158,7 @@ async fn insert_metars(pool: &PgPool, rows: &[MetarRow]) -> Result<usize, String
         .bind(row.temp_c)
         .bind(row.dewpoint_c)
         .bind(row.altimeter)
+        .bind(row.slp_hpa)
         .bind(row.latitude)
         .bind(row.longitude)
         .execute(&mut *tx)

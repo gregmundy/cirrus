@@ -19,6 +19,7 @@ pub struct StationObs {
     temp_c: Option<f32>,
     dewpoint_c: Option<f32>,
     altimeter_inhg: Option<f32>,
+    slp_hpa: Option<f32>,
     latitude: f64,
     longitude: f64,
 }
@@ -31,7 +32,7 @@ pub async fn get_stations(
             station, observation_time, raw_text, flight_category,
             wind_dir_degrees, wind_speed_kt, wind_gust_kt,
             visibility_sm, wx_string, sky_cover, ceiling_ft,
-            temp_c, dewpoint_c, altimeter_inhg, latitude, longitude
+            temp_c, dewpoint_c, altimeter_inhg, slp_hpa, latitude, longitude
         FROM opmet_reports
         WHERE report_type = 'METAR'
           AND observation_time > NOW() - INTERVAL '3 hours'

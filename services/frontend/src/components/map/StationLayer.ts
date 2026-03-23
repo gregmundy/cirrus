@@ -29,10 +29,11 @@ function wxToSymbol(wx: string): string {
   return wx.substring(0, 2);
 }
 
-function formatPressure(altimeterInHg: number | null): string {
-  if (altimeterInHg == null) return '';
-  const hpa = altimeterInHg * 33.8639;
-  const tenths = Math.round(hpa * 10) % 1000;
+/** Format sea level pressure: last 3 digits in tenths of hPa.
+ *  e.g. 1013.2 hPa -> "132", 996.9 hPa -> "969" */
+function formatPressure(slpHpa: number | null): string {
+  if (slpHpa == null) return '';
+  const tenths = Math.round(slpHpa * 10) % 1000;
   return String(tenths).padStart(3, '0');
 }
 
@@ -202,8 +203,8 @@ export function createStationModelLayers(
     }));
   }
 
-  // 6. Visibility — far left (only when < 10 SM)
-  const withVis = data.filter((d) => d.visibility_sm != null && d.visibility_sm < 10);
+  // 6. Visibility — far left, always shown
+  const withVis = data.filter((d) => d.visibility_sm != null);
   if (withVis.length > 0) {
     layers.push(new TextLayer<StationObs>({
       id: 'station-visibility',
@@ -211,7 +212,10 @@ export function createStationModelLayers(
       getPosition: (d) => [d.longitude, d.latitude],
       getText: (d) => {
         const v = d.visibility_sm!;
-        return v < 1 ? v.toFixed(1) : `${Math.round(v)}`;
+        if (v >= 10) return '10+';
+        if (v < 0.25) return '0';
+        if (v < 1) return v.toFixed(1);
+        return `${Math.round(v)}`;
       },
       getSize: smallTextSize,
       getColor: [60, 60, 60, 220],
@@ -225,13 +229,15 @@ export function createStationModelLayers(
   }
 
   // 7. Sea level pressure — upper-right
-  const withPressure = data.filter((d) => d.altimeter_inhg != null);
+  // Only show pressure when SLP is available — altimeter (QNH) diverges
+  // from SLP at elevated stations and gives misleading values
+  const withPressure = data.filter((d) => d.slp_hpa != null);
   if (withPressure.length > 0) {
     layers.push(new TextLayer<StationObs>({
       id: 'station-pressure',
       data: withPressure,
       getPosition: (d) => [d.longitude, d.latitude],
-      getText: (d) => formatPressure(d.altimeter_inhg),
+      getText: (d) => formatPressure(d.slp_hpa),
       getSize: smallTextSize,
       getColor: [40, 40, 40, 230],
       getTextAnchor: 'start',
@@ -243,7 +249,26 @@ export function createStationModelLayers(
     }));
   }
 
-  // 8. Station ICAO code — lower-right (only at zoom >= 8 to avoid map label clutter)
+  // 8. Ceiling height — lower-right (in hundreds of feet)
+  const withCeiling = data.filter((d) => d.ceiling_ft != null);
+  if (withCeiling.length > 0) {
+    layers.push(new TextLayer<StationObs>({
+      id: 'station-ceiling',
+      data: withCeiling,
+      getPosition: (d) => [d.longitude, d.latitude],
+      getText: (d) => `${Math.round(d.ceiling_ft! / 100)}`,
+      getSize: smallTextSize,
+      getColor: [40, 40, 40, 230],
+      getTextAnchor: 'start',
+      getAlignmentBaseline: 'top',
+      getPixelOffset: [textGap, 2],
+      fontFamily: 'monospace',
+      sizeUnits: 'pixels',
+      pickable: false,
+    }));
+  }
+
+  // 9. Station ICAO code — lower-right below ceiling (only at zoom >= 8)
   if (zoom >= 8) {
     layers.push(new TextLayer<StationObs>({
       id: 'station-id',
@@ -254,7 +279,7 @@ export function createStationModelLayers(
       getColor: [50, 50, 50, 220],
       getTextAnchor: 'start',
       getAlignmentBaseline: 'top',
-      getPixelOffset: [textGap, Math.round(14 * s)],
+      getPixelOffset: [textGap, Math.round(20 * s)],
       fontFamily: 'monospace',
       fontWeight: 'bold',
       sizeUnits: 'pixels',
