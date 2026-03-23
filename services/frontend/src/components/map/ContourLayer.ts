@@ -1,5 +1,6 @@
 import { PathLayer, TextLayer } from '@deck.gl/layers';
 import type { Layer } from '@deck.gl/core';
+import { PathStyleExtension } from '@deck.gl/extensions';
 import type { ContourLine, ContourLabel } from '../../utils/contourComputation';
 import type { Extremum } from '../../utils/extremaDetection';
 
@@ -168,6 +169,109 @@ export function createHeightLayers(contours: ComputedContours): Layer[] {
         }),
       );
     }
+  }
+
+  return layers;
+}
+
+/**
+ * Create tropopause height contour layers — thin dotted light blue lines labeled with FL.
+ */
+export function createTropopauseLayers(contours: ComputedContours): Layer[] {
+  const { lines, labels } = contours;
+  if (lines.length === 0) return [];
+
+  return [
+    new PathLayer<ContourLine>({
+      id: 'tropopause-contours',
+      data: lines,
+      getPath: (d) => d.coordinates,
+      getColor: [100, 180, 240, 200],
+      getWidth: 1.5,
+      widthUnits: 'pixels',
+      widthMinPixels: 1,
+      getDashArray: [4, 3],
+      extensions: [new PathStyleExtension({ dash: true })],
+      pickable: false,
+    }),
+    new TextLayer<ContourLabel>({
+      id: 'tropopause-labels',
+      data: labels,
+      getPosition: (d) => d.position,
+      getText: (d) => d.text,
+      getSize: 12,
+      getColor: [70, 150, 220, 255],
+      getTextAnchor: 'middle',
+      getAlignmentBaseline: 'center',
+      fontFamily: 'monospace',
+      fontWeight: 'bold',
+      sizeUnits: 'pixels',
+      pickable: false,
+    }),
+  ];
+}
+
+/**
+ * Create max wind isotach contour layers — dark green lines at 20kt intervals.
+ * Lines at 80kt+ are thicker to highlight jet cores.
+ */
+export function createMaxWindIsotachLayers(contours: ComputedContours): Layer[] {
+  const { lines, labels } = contours;
+  if (lines.length === 0) return [];
+
+  // Split lines into normal (<80kt) and strong (>=80kt)
+  const normalLines = lines.filter((l) => l.value < 80);
+  const strongLines = lines.filter((l) => l.value >= 80);
+
+  const layers: Layer[] = [];
+
+  if (normalLines.length > 0) {
+    layers.push(
+      new PathLayer<ContourLine>({
+        id: 'maxwind-isotach-normal',
+        data: normalLines,
+        getPath: (d) => d.coordinates,
+        getColor: [20, 120, 60, 160],
+        getWidth: 1.5,
+        widthUnits: 'pixels',
+        widthMinPixels: 1,
+        pickable: false,
+      }),
+    );
+  }
+
+  if (strongLines.length > 0) {
+    layers.push(
+      new PathLayer<ContourLine>({
+        id: 'maxwind-isotach-strong',
+        data: strongLines,
+        getPath: (d) => d.coordinates,
+        getColor: [15, 100, 50, 200],
+        getWidth: 2.5,
+        widthUnits: 'pixels',
+        widthMinPixels: 2,
+        pickable: false,
+      }),
+    );
+  }
+
+  if (labels.length > 0) {
+    layers.push(
+      new TextLayer<ContourLabel>({
+        id: 'maxwind-isotach-labels',
+        data: labels,
+        getPosition: (d) => d.position,
+        getText: (d) => d.text,
+        getSize: 12,
+        getColor: [15, 100, 50, 255],
+        getTextAnchor: 'middle',
+        getAlignmentBaseline: 'center',
+        fontFamily: 'monospace',
+        fontWeight: 'bold',
+        sizeUnits: 'pixels',
+        pickable: false,
+      }),
+    );
   }
 
   return layers;
