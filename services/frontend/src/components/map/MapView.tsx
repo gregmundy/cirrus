@@ -13,6 +13,7 @@ import { createStationDotsLayer, createStationLabelsLayer, createStationModelLay
 import { getStationModelAtlas } from '../../utils/stationModelAtlas';
 import type { StationModelMapping } from '../../utils/stationModelAtlas';
 import StationPopup from '../StationPopup';
+import MapLegend from '../MapLegend';
 import type { StationObs } from '../../stores/appStore';
 
 export default function MapView() {
@@ -323,6 +324,7 @@ export default function MapView() {
           onClose={() => setSelectedStation(null)}
         />
       )}
+      <MapLegend />
     </>
   );
 }

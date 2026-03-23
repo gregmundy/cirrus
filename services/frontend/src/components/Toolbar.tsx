@@ -1,5 +1,6 @@
 import { useAppStore } from '../stores/appStore';
 import GoToLocation from './GoToLocation';
+import IcaoAreaSelector from './IcaoAreaSelector';
 
 /** Approximate pressure (hPa) -> flight level label */
 function flightLevelLabel(hpa: number): string {
@@ -103,6 +104,8 @@ export default function Toolbar() {
           ))}
         </select>
       </label>
+
+      <IcaoAreaSelector onFitBounds={(s, w, n, e) => mapFitBounds?.(s, w, n, e)} />
 
       <button
         className={windVisible ? 'toggle-btn active' : 'toggle-btn'}

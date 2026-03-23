@@ -152,3 +152,33 @@ html, body, #root {
   display: flex;
   gap: 4px;
 }
+
+.map-legend {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  background: rgba(22, 33, 62, 0.85);
+  color: #ccc;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+  padding: 6px 10px;
+  font-family: monospace;
+  font-size: 11px;
+  line-height: 1.5;
+  z-index: 15;
+  pointer-events: none;
+}
+
+.legend-row {
+  white-space: nowrap;
+}
+
+.legend-source {
+  color: #4fc3f7;
+  font-weight: bold;
+}
+
+.legend-layers {
+  color: #999;
+  font-size: 10px;
+}
