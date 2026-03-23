@@ -102,6 +102,24 @@ interface AppState {
   toggleStations: () => void;
   fetchStationData: () => Promise<void>;
 
+  // Tropopause (pre-computed contours)
+  tropopauseContours: ComputedContours | null;
+  tropopauseVisible: boolean;
+  tropopauseLoading: boolean;
+  tropopauseError: string | null;
+  tropopauseTempData: { lats: number[]; lons: number[]; values: number[]; ni: number; nj: number } | null;
+  toggleTropopause: () => void;
+  fetchTropopauseData: () => Promise<void>;
+
+  // Max Wind / Jet Stream
+  maxWindVisible: boolean;
+  maxWindLoading: boolean;
+  maxWindError: string | null;
+  maxWindContours: ComputedContours | null;
+  maxWindBarbs: { lat: number; lon: number; speed: number; direction: number; fl: number }[];
+  toggleMaxWind: () => void;
+  fetchMaxWindData: () => Promise<void>;
+
   // Actions
   fetchMeta: () => Promise<void>;
   fetchWindData: () => Promise<void>;
@@ -228,6 +246,18 @@ export const useAppStore = create<AppState>((set, get) => ({
   stationLoading: false,
   stationError: null,
 
+  tropopauseContours: null,
+  tropopauseVisible: false,
+  tropopauseLoading: false,
+  tropopauseError: null,
+  tropopauseTempData: null,
+
+  maxWindVisible: false,
+  maxWindLoading: false,
+  maxWindError: null,
+  maxWindContours: null,
+  maxWindBarbs: [],
+
   toggleStations: () => {
     const wasVisible = get().stationVisible;
     set({ stationVisible: !wasVisible });
@@ -272,6 +302,181 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({ humidityVisible: !wasVisible });
     if (!wasVisible && !get().humidityContours) {
       get().fetchHumidityData();
+    }
+  },
+
+  toggleTropopause: () => {
+    const wasVisible = get().tropopauseVisible;
+    set({ tropopauseVisible: !wasVisible });
+    if (!wasVisible && !get().tropopauseContours) {
+      get().fetchTropopauseData();
+    }
+  },
+
+  fetchTropopauseData: async () => {
+    const { selectedRunTime, selectedForecastHour } = get();
+    set({ tropopauseLoading: true, tropopauseError: null });
+    try {
+      // Fetch tropopause pressure for contours
+      const params = new URLSearchParams({
+        parameter: 'PRES',
+        level_hpa: '-1',
+        level_type: 'tropopause',
+        forecast_hour: String(selectedForecastHour),
+        thin: '2',
+      });
+      if (selectedRunTime) params.set('run_time', selectedRunTime);
+
+      const res = await fetch(`/api/gridded?${params}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data: GriddedData = await res.json();
+
+      // Convert pressure (Pa) to flight level for contouring
+      const flValues = data.values.map((p: number) => {
+        const fl = (1 - Math.pow(p / 101325, 0.190284)) * 145366.45 / 100;
+        return Math.round(fl / 10) * 10; // Round to nearest 10 FL
+      });
+
+      const contours = await computeContoursAsync({
+        type: 'tropopause',
+        ni: data.ni,
+        nj: data.nj,
+        lats: data.lats,
+        lons: data.lons,
+        values: flValues,
+        interval: 20,
+        upsampleFactor: 4,
+        labelSuffix: '',
+        influenceRadius: 30,
+        minSeparationDeg: 25,
+      });
+
+      // Prepend "FL" to tropopause contour labels
+      contours.labels = contours.labels.map(l => ({
+        ...l,
+        text: `FL${l.text}`,
+      }));
+
+      // Also fetch tropopause temperature for tooltips
+      const tempParams = new URLSearchParams({
+        parameter: 'TMP',
+        level_hpa: '-1',
+        level_type: 'tropopause',
+        forecast_hour: String(selectedForecastHour),
+        thin: '2',
+      });
+      if (selectedRunTime) tempParams.set('run_time', selectedRunTime);
+
+      let tempData = null;
+      try {
+        const tempRes = await fetch(`/api/gridded?${tempParams}`);
+        if (tempRes.ok) {
+          const td: GriddedData = await tempRes.json();
+          tempData = {
+            lats: td.lats,
+            lons: td.lons,
+            values: td.values.map((k: number) => k - 273.15), // K → °C
+            ni: td.ni,
+            nj: td.nj,
+          };
+        }
+      } catch {
+        // Temperature tooltip is optional — don't fail if unavailable
+      }
+
+      set({
+        tropopauseContours: { lines: contours.lines, labels: contours.labels },
+        tropopauseTempData: tempData,
+        tropopauseLoading: false,
+      });
+    } catch (err) {
+      set({
+        tropopauseError: err instanceof Error ? err.message : 'Unknown error',
+        tropopauseLoading: false,
+      });
+    }
+  },
+
+  toggleMaxWind: () => {
+    const wasVisible = get().maxWindVisible;
+    set({ maxWindVisible: !wasVisible });
+    if (!wasVisible && !get().maxWindContours) {
+      get().fetchMaxWindData();
+    }
+  },
+
+  fetchMaxWindData: async () => {
+    const { selectedRunTime, selectedForecastHour } = get();
+    set({ maxWindLoading: true, maxWindError: null });
+    try {
+      // Fetch max wind data from dedicated endpoint
+      const params = new URLSearchParams({
+        forecast_hour: String(selectedForecastHour),
+        thin: '2',
+      });
+      if (selectedRunTime) params.set('run_time', selectedRunTime);
+
+      const res = await fetch(`/api/maxwind?${params}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+
+      // Build wind speed grid for isotach contouring
+      const speeds: number[] = data.speeds;
+
+      // Compute unique sorted lats and lons to determine grid dimensions
+      const uniqueLats = [...new Set(data.lats as number[])].sort((a: number, b: number) => b - a);
+      const uniqueLons = [...new Set(data.lons as number[])].sort((a: number, b: number) => a - b);
+      const ni = uniqueLons.length;
+      const nj = uniqueLats.length;
+
+      // Build a 2D grid of speeds (row-major: nj rows of ni columns)
+      const gridSpeeds = new Array(nj * ni).fill(0);
+      for (let k = 0; k < data.count; k++) {
+        const jIdx = uniqueLats.indexOf(data.lats[k]);
+        const iIdx = uniqueLons.indexOf(data.lons[k]);
+        if (jIdx >= 0 && iIdx >= 0) {
+          gridSpeeds[jIdx * ni + iIdx] = speeds[k];
+        }
+      }
+
+      const contours = await computeContoursAsync({
+        type: 'maxwind',
+        ni,
+        nj,
+        lats: uniqueLats,
+        lons: uniqueLons,
+        values: gridSpeeds,
+        interval: 20,
+        upsampleFactor: 4,
+        labelSuffix: 'kt',
+        influenceRadius: 30,
+        minSeparationDeg: 25,
+      });
+
+      // Build wind barb data for points >= 60kt
+      const barbs: { lat: number; lon: number; speed: number; direction: number; fl: number }[] = [];
+      for (let k = 0; k < data.count; k++) {
+        if (data.speeds[k] >= 60) {
+          barbs.push({
+            lat: data.lats[k],
+            lon: data.lons[k],
+            speed: data.speeds[k],
+            direction: data.directions[k],
+            fl: data.flight_levels[k],
+          });
+        }
+      }
+
+      set({
+        maxWindContours: { lines: contours.lines, labels: contours.labels },
+        maxWindBarbs: barbs,
+        maxWindLoading: false,
+      });
+    } catch (err) {
+      set({
+        maxWindError: err instanceof Error ? err.message : 'Unknown error',
+        maxWindLoading: false,
+      });
     }
   },
 
@@ -397,33 +602,39 @@ export const useAppStore = create<AppState>((set, get) => ({
     set(updates);
     get().fetchWindData();
     // Clear cached contours
-    set({ temperatureContours: null, heightContours: null, humidityContours: null });
+    set({ temperatureContours: null, heightContours: null, humidityContours: null, tropopauseContours: null, tropopauseTempData: null, maxWindContours: null, maxWindBarbs: [] });
     // Refetch visible layers
     if (get().temperatureVisible) get().fetchTemperatureData();
     if (get().heightVisible) get().fetchHeightData();
     if (get().humidityVisible) get().fetchHumidityData();
+    if (get().tropopauseVisible) get().fetchTropopauseData();
+    if (get().maxWindVisible) get().fetchMaxWindData();
   },
 
   setForecastHour: (h: number) => {
     set({ selectedForecastHour: h });
     get().fetchWindData();
     // Clear cached contours
-    set({ temperatureContours: null, heightContours: null, humidityContours: null });
+    set({ temperatureContours: null, heightContours: null, humidityContours: null, tropopauseContours: null, tropopauseTempData: null, maxWindContours: null, maxWindBarbs: [] });
     // Refetch visible layers
     if (get().temperatureVisible) get().fetchTemperatureData();
     if (get().heightVisible) get().fetchHeightData();
     if (get().humidityVisible) get().fetchHumidityData();
+    if (get().tropopauseVisible) get().fetchTropopauseData();
+    if (get().maxWindVisible) get().fetchMaxWindData();
   },
 
   setLevel: (l: number) => {
     set({ selectedLevel: l });
     get().fetchWindData();
     // Clear cached contours
-    set({ temperatureContours: null, heightContours: null, humidityContours: null });
+    set({ temperatureContours: null, heightContours: null, humidityContours: null, tropopauseContours: null, tropopauseTempData: null, maxWindContours: null, maxWindBarbs: [] });
     // Refetch visible layers
     if (get().temperatureVisible) get().fetchTemperatureData();
     if (get().heightVisible) get().fetchHeightData();
     if (get().humidityVisible) get().fetchHumidityData();
+    if (get().tropopauseVisible) get().fetchTropopauseData();
+    if (get().maxWindVisible) get().fetchMaxWindData();
   },
 
   toggleWind: () => set((s) => ({ windVisible: !s.windVisible })),
