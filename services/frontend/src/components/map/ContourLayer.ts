@@ -182,10 +182,10 @@ export function createTropopauseLayers(contours: ComputedContours): Layer[] {
   if (lines.length === 0) return [];
 
   return [
-    new PathLayer<ContourLine>({
+    new (PathLayer as any)({
       id: 'tropopause-contours',
       data: lines,
-      getPath: (d) => d.coordinates,
+      getPath: (d: ContourLine) => d.coordinates,
       getColor: [100, 180, 240, 200],
       getWidth: 1.5,
       widthUnits: 'pixels',
