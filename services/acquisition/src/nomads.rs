@@ -15,6 +15,7 @@ const LEVELS: &[&str] = &[
     "lev_250_mb=on", "lev_300_mb=on", "lev_400_mb=on", "lev_500_mb=on",
     "lev_600_mb=on", "lev_700_mb=on", "lev_850_mb=on",
     "lev_tropopause=on",
+    "lev_max_wind=on",
 ];
 
 /// Build the NOMADS filter URL for a specific GFS cycle and forecast hour.
@@ -120,6 +121,7 @@ mod tests {
         assert!(url.contains("var_UGRD=on"));
         assert!(url.contains("lev_850_mb=on"));
         assert!(url.contains("lev_tropopause=on"));
+        assert!(url.contains("lev_max_wind=on"));
         assert!(url.contains("var_PRES=on"));
     }
 
