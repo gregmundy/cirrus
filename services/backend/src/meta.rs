@@ -66,10 +66,12 @@ pub async fn get_meta(State(pool): State<PgPool>) -> Json<MetaResponse> {
             let levels: Vec<i32> = _all_levels
                 .into_iter()
                 .filter(|&lev| {
-                    wind_levels
-                        .get(&(run_time, lev))
-                        .map(|p| p.contains("UGRD") && p.contains("VGRD"))
-                        .unwrap_or(false)
+                    // Exclude special surfaces (tropopause=-1, maxwind=-1, surface=0)
+                    lev > 0
+                        && wind_levels
+                            .get(&(run_time, lev))
+                            .map(|p| p.contains("UGRD") && p.contains("VGRD"))
+                            .unwrap_or(false)
                 })
                 .collect();
             RunMeta {
