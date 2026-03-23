@@ -43,6 +43,39 @@ def test_extract_field_maxwind_level():
     assert result["parameter"] == "UGRD"
 
 
+def test_extract_field_maxwind_level_string_surface_type():
+    """ecCodes may return typeOfFirstFixedSurface as a string '6'."""
+    msgid = MagicMock()
+
+    def mock_get(mid, key):
+        vals = {
+            "shortName": "u",
+            "typeOfFirstFixedSurface": "6",  # String, as ecCodes actually returns
+            "level": 250,
+            "Ni": 4,
+            "Nj": 2,
+            "latitudeOfFirstGridPointInDegrees": 90.0,
+            "longitudeOfFirstGridPointInDegrees": 0.0,
+            "latitudeOfLastGridPointInDegrees": -90.0,
+            "longitudeOfLastGridPointInDegrees": 359.75,
+            "jDirectionIncrementInDegrees": 0.25,
+            "iDirectionIncrementInDegrees": 0.25,
+        }
+        return vals[key]
+
+    import numpy as np
+    def mock_get_array(mid, key):
+        return np.zeros(8, dtype=np.float32)
+
+    with patch("eccodes.codes_get", side_effect=mock_get), \
+         patch("eccodes.codes_get_array", side_effect=mock_get_array):
+        result = _extract_field(msgid, 1, datetime(2026, 3, 22, tzinfo=timezone.utc), 6)
+
+    assert result is not None
+    assert result["level_type"] == "maxwind"
+    assert result["level_hpa"] == -1
+
+
 def test_extract_field_tropopause_unchanged():
     """Tropopause (type 7) still works after adding max wind."""
     msgid = MagicMock()

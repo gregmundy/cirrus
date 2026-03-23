@@ -15,8 +15,10 @@ PARAM_MAP = {
     "gh": "HGT",
     "r": "RH",
     "pres": "PRES",
+    "trpp": "PRES",  # Tropopause pressure (GFS shortName)
 }
 
+# ecCodes returns typeOfFirstFixedSurface as a string
 TROPOPAUSE_SURFACE_TYPE = 7
 MAX_WIND_SURFACE_TYPE = 6
 
@@ -50,12 +52,17 @@ def _extract_field(msgid: int, download_id: int, run_time: datetime, forecast_ho
     if parameter is None:
         return None
 
-    level_type_int = eccodes.codes_get(msgid, "typeOfFirstFixedSurface")
+    # ecCodes may return typeOfFirstFixedSurface as int or string
+    raw_surface_type = eccodes.codes_get(msgid, "typeOfFirstFixedSurface")
+    try:
+        surface_type = int(raw_surface_type)
+    except (ValueError, TypeError):
+        surface_type = -1  # Non-numeric surface type (e.g., "pl", "sfc")
 
-    if level_type_int == TROPOPAUSE_SURFACE_TYPE:
+    if surface_type == TROPOPAUSE_SURFACE_TYPE:
         level_hpa = -1
         level_type = "tropopause"
-    elif level_type_int == MAX_WIND_SURFACE_TYPE:
+    elif surface_type == MAX_WIND_SURFACE_TYPE:
         level_hpa = -1
         level_type = "maxwind"
     else:
