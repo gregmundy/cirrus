@@ -1,4 +1,5 @@
 mod gridded;
+mod maxwind;
 mod meta;
 mod opmet;
 mod wind;
@@ -40,6 +41,7 @@ async fn main() {
         .route("/api/wind", get(wind::get_wind))
         .route("/api/gridded", get(gridded::get_gridded))
         .route("/api/gridded/meta", get(meta::get_meta))
+        .route("/api/maxwind", get(maxwind::get_maxwind))
         .route("/api/opmet/stations", get(opmet::get_stations))
         .with_state(pool);
 
