@@ -5,7 +5,7 @@ import type { Extremum } from './extremaDetection';
 
 export interface ContourRequest {
   id: number;
-  type: 'temperature' | 'height' | 'humidity';
+  type: 'temperature' | 'height' | 'humidity' | 'tropopause' | 'maxwind';
   ni: number;
   nj: number;
   lats: number[];
@@ -22,7 +22,7 @@ export interface ContourRequest {
 
 export interface ContourResult {
   id: number;
-  type: 'temperature' | 'height' | 'humidity';
+  type: 'temperature' | 'height' | 'humidity' | 'tropopause' | 'maxwind';
   lines: ContourLine[];
   labels: ContourLabel[];
   extrema?: { highs: Extremum[]; lows: Extremum[] };
