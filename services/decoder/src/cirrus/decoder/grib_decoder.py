@@ -52,22 +52,28 @@ def _extract_field(msgid: int, download_id: int, run_time: datetime, forecast_ho
     if parameter is None:
         return None
 
-    # ecCodes may return typeOfFirstFixedSurface as int or string
-    raw_surface_type = eccodes.codes_get(msgid, "typeOfFirstFixedSurface")
-    try:
-        surface_type = int(raw_surface_type)
-    except (ValueError, TypeError):
-        surface_type = -1  # Non-numeric surface type (e.g., "pl", "sfc")
-
-    if surface_type == TROPOPAUSE_SURFACE_TYPE:
+    # Tropopause pressure is identified by shortName "trpp" in GFS,
+    # not by surface type 7 as in the GRIB2 spec
+    if short_name == "trpp":
         level_hpa = -1
         level_type = "tropopause"
-    elif surface_type == MAX_WIND_SURFACE_TYPE:
-        level_hpa = -1
-        level_type = "maxwind"
     else:
-        level_hpa = eccodes.codes_get(msgid, "level")
-        level_type = "isobaricInhPa"
+        # ecCodes may return typeOfFirstFixedSurface as int or string
+        raw_surface_type = eccodes.codes_get(msgid, "typeOfFirstFixedSurface")
+        try:
+            surface_type = int(raw_surface_type)
+        except (ValueError, TypeError):
+            surface_type = -1  # Non-numeric surface type (e.g., "pl", "sfc")
+
+        if surface_type == TROPOPAUSE_SURFACE_TYPE:
+            level_hpa = -1
+            level_type = "tropopause"
+        elif surface_type == MAX_WIND_SURFACE_TYPE:
+            level_hpa = -1
+            level_type = "maxwind"
+        else:
+            level_hpa = eccodes.codes_get(msgid, "level")
+            level_type = "isobaricInhPa"
 
     ni = eccodes.codes_get(msgid, "Ni")
     nj = eccodes.codes_get(msgid, "Nj")
