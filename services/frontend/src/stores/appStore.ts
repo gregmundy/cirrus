@@ -332,10 +332,10 @@ export const useAppStore = create<AppState>((set, get) => ({
       const data: GriddedData = await res.json();
 
       // Convert pressure (Pa) to flight level for contouring
-      const flValues = data.values.map((p: number) => {
-        const fl = (1 - Math.pow(p / 101325, 0.190284)) * 145366.45 / 100;
-        return Math.round(fl / 10) * 10; // Round to nearest 10 FL
-      });
+      // Use raw float values — rounding before contouring creates blocky artifacts
+      const flValues = data.values.map((p: number) =>
+        (1 - Math.pow(p / 101325, 0.190284)) * 145366.45 / 100
+      );
 
       const contours = await computeContoursAsync({
         type: 'tropopause',
