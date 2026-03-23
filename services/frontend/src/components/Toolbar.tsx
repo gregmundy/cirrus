@@ -48,6 +48,12 @@ export default function Toolbar() {
   const stationVisible = useAppStore((s) => s.stationVisible);
   const stationLoading = useAppStore((s) => s.stationLoading);
   const toggleStations = useAppStore((s) => s.toggleStations);
+  const tropopauseVisible = useAppStore((s) => s.tropopauseVisible);
+  const tropopauseLoading = useAppStore((s) => s.tropopauseLoading);
+  const toggleTropopause = useAppStore((s) => s.toggleTropopause);
+  const maxWindVisible = useAppStore((s) => s.maxWindVisible);
+  const maxWindLoading = useAppStore((s) => s.maxWindLoading);
+  const toggleMaxWind = useAppStore((s) => s.toggleMaxWind);
   const mapGoTo = useAppStore((s) => s.mapGoTo);
   const mapFitBounds = useAppStore((s) => s.mapFitBounds);
 
@@ -131,6 +137,20 @@ export default function Toolbar() {
         onClick={toggleStations}
       >
         Stations {stationLoading ? '...' : stationVisible ? 'ON' : 'OFF'}
+      </button>
+
+      <button
+        className={tropopauseVisible ? 'toggle-btn active' : 'toggle-btn'}
+        onClick={toggleTropopause}
+      >
+        Trop {tropopauseLoading ? '...' : tropopauseVisible ? 'ON' : 'OFF'}
+      </button>
+
+      <button
+        className={maxWindVisible ? 'toggle-btn active' : 'toggle-btn'}
+        onClick={toggleMaxWind}
+      >
+        Jet {maxWindLoading ? '...' : maxWindVisible ? 'ON' : 'OFF'}
       </button>
 
       <GoToLocation
