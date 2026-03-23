@@ -14,7 +14,7 @@ Add two new map layers to display tropopause height and maximum wind / jet strea
 
 Tropopause pressure is already acquired (`lev_tropopause=on`) and decoded into `gridded_fields` with `level_type='tropopause'`, `level_hpa=-1`, `parameter='PRES'`. Tropopause temperature (`parameter='TMP'`) is also stored for tooltip use.
 
-No backend changes needed — the generic `/api/gridded` endpoint serves both parameters.
+Backend change needed: add an optional `level_type` query parameter to `/api/gridded` and include it in the WHERE clause. Both tropopause and max wind store data at `level_hpa=-1`, so `level_type` is required to disambiguate. Tropopause fetches pass `level_type=tropopause&level_hpa=-1`.
 
 ### Visualization
 
@@ -22,7 +22,7 @@ No backend changes needed — the generic `/api/gridded` endpoint serves both pa
 - Pressure (Pa) converted to flight level: `FL = (1 - (P / 101325)^0.190284) * 145366.45 / 100`, rounded to nearest 10
 - Contour interval: every 20 FL (FL260, FL280, FL300, FL320, etc.)
 - Labels: "FL300", "FL320", etc. in light blue
-- Deck.gl `PathLayer` with `getDashArray` for dotted lines + `TextLayer` for labels
+- Deck.gl `PathLayer` with `getDashArray` + `PathStyleExtension({ dash: true })` for dotted lines + `TextLayer` for labels
 
 ### Interaction
 
@@ -32,7 +32,8 @@ No backend changes needed — the generic `/api/gridded` endpoint serves both pa
 
 ### Frontend Changes
 
-- `appStore.ts`: `tropopauseVisible`, `tropopauseContours`, `tropopauseLoading`, `tropopauseError`, `tropopauseTempData` (raw temp grid for tooltip lookup)
+- `appStore.ts`: `tropopauseVisible`, `tropopauseContours`, `tropopauseLoading`, `tropopauseError`, `tropopauseTempData` (raw temp grid for tooltip lookup). Tropopause fetch must use hardcoded `level_hpa=-1` and `level_type=tropopause`, not the operator-selected `selectedLevel`.
+- `appStore.ts`: Update `setRunTime`, `setForecastHour`, and `setLevel` cache-invalidation blocks to null out `tropopauseContours` and `maxWindContours`/`maxWindBarbs`.
 - `ContourLayer.ts`: New `createTropopauseLayers()` function
 - `Toolbar.tsx`: "Trop" toggle button
 - `MapView.tsx`: Conditionally render tropopause layers
@@ -75,7 +76,7 @@ New `/api/maxwind` endpoint:
 
 - `appStore.ts`: `maxWindVisible`, `maxWindContours`, `maxWindBarbs`, `maxWindLoading`, `maxWindError`
 - `ContourLayer.ts`: New `createMaxWindLayers()` — isotach `PathLayer` + `TextLayer`
-- Max wind barb layer: reuse existing wind barb SVG atlas approach, filtered to >= 60kt, green color
+- Max wind barb layer: generate a separate green-colored wind barb SVG atlas (the existing atlas is black/dark and `IconLayer` color tinting produces poor results on stroked SVGs). Filter to >= 60kt grid points.
 - `Toolbar.tsx`: "Jet" toggle button
 - `MapView.tsx`: Conditionally render max wind layers
 
@@ -85,6 +86,7 @@ New `/api/maxwind` endpoint:
 |---------|------|--------|
 | Acquisition | `nomads.rs` | Add `"lev_max_wind=on"` to `LEVELS` |
 | Decoder | `grib_decoder.py` | Add surface type 6 handling → `level_type='maxwind'`, `level_hpa=-1` |
+| Backend | `gridded.rs` | Add optional `level_type` query parameter to `/api/gridded` |
 | Backend | New `maxwind.rs` | `/api/maxwind` endpoint: U/V/PRES → speed/direction/FL |
 | Backend | `main.rs` | Register `/api/maxwind` route |
 | Frontend | `appStore.ts` | Two new layer groups (tropopause + max wind) |
