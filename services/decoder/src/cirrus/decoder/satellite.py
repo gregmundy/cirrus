@@ -35,8 +35,8 @@ TARGET_LAT_N = 50.0
 TARGET_LAT_S = 24.0
 TARGET_LON_W = -125.0
 TARGET_LON_E = -66.0
-TARGET_NJ = 500  # latitude points
-TARGET_NI = 900  # longitude points
+TARGET_NJ = 1000  # latitude points
+TARGET_NI = 1800  # longitude points
 
 
 def get_s3_client():
@@ -119,8 +119,8 @@ def reproject_goes(nc_path: str) -> dict:
 
     # Downsample high-res channels (Ch02 is 6000x10000)
     step = 1
-    if cmi.shape[0] > 2000:
-        step = cmi.shape[0] // 1500
+    if cmi.shape[0] > 3000:
+        step = cmi.shape[0] // 3000
         cmi = cmi[::step, ::step]
         x = x[::step]
         y = y[::step]
