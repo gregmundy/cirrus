@@ -2,6 +2,7 @@ mod gridded;
 mod maxwind;
 mod meta;
 mod opmet;
+mod satellite;
 mod sigwx;
 mod wind;
 
@@ -45,6 +46,7 @@ async fn main() {
         .route("/api/maxwind", get(maxwind::get_maxwind))
         .route("/api/opmet/stations", get(opmet::get_stations))
         .route("/api/sigwx", get(sigwx::get_sigwx))
+        .route("/api/satellite/:channel", get(satellite::get_satellite))
         .with_state(pool);
 
     let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{PORT}"))

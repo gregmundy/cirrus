@@ -128,6 +128,16 @@ interface AppState {
   toggleSigwx: () => void;
   fetchSigwxData: () => Promise<void>;
 
+  // Satellite
+  satelliteVisible: boolean;
+  satelliteChannel: number;
+  satelliteLoading: boolean;
+  satelliteError: string | null;
+  satelliteData: any | null;
+  toggleSatellite: () => void;
+  setSatelliteChannel: (ch: number) => void;
+  fetchSatelliteData: () => Promise<void>;
+
   // Actions
   fetchMeta: () => Promise<void>;
   fetchWindData: () => Promise<void>;
@@ -270,6 +280,12 @@ export const useAppStore = create<AppState>((set, get) => ({
   sigwxLoading: false,
   sigwxError: null,
   sigwxFeatures: [],
+
+  satelliteVisible: false,
+  satelliteChannel: 13,
+  satelliteLoading: false,
+  satelliteError: null,
+  satelliteData: null,
 
   toggleStations: () => {
     const wasVisible = get().stationVisible;
@@ -518,6 +534,37 @@ export const useAppStore = create<AppState>((set, get) => ({
       set({
         sigwxError: err instanceof Error ? err.message : 'Unknown error',
         sigwxLoading: false,
+      });
+    }
+  },
+
+  toggleSatellite: () => {
+    const wasVisible = get().satelliteVisible;
+    set({ satelliteVisible: !wasVisible });
+    if (!wasVisible && !get().satelliteData) {
+      get().fetchSatelliteData();
+    }
+  },
+
+  setSatelliteChannel: (ch: number) => {
+    set({ satelliteChannel: ch, satelliteData: null });
+    if (get().satelliteVisible) {
+      get().fetchSatelliteData();
+    }
+  },
+
+  fetchSatelliteData: async () => {
+    const { satelliteChannel } = get();
+    set({ satelliteLoading: true, satelliteError: null });
+    try {
+      const res = await fetch(`/api/satellite/${satelliteChannel}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      set({ satelliteData: data, satelliteLoading: false });
+    } catch (err) {
+      set({
+        satelliteError: err instanceof Error ? err.message : 'Unknown error',
+        satelliteLoading: false,
       });
     }
   },

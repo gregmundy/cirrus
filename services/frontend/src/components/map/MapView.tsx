@@ -10,6 +10,7 @@ import { getWindBarbKey, generateWindBarbMapping } from '../../utils/windBarbs';
 import { getWindBarbAtlas, getStationWindBarbAtlas, getJetWindBarbAtlas } from '../../utils/windBarbAtlas';
 import { createTemperatureLayers, createHeightLayers, createHumidityLayers, createTropopauseLayers, createMaxWindIsotachLayers } from './ContourLayer';
 import { createSigwxLayers } from './SigwxLayer';
+import { createSatelliteLayer } from './SatelliteLayer';
 import { getSigwxSymbolAtlas } from '../../utils/sigwxSymbols';
 import type { SigwxSymbolAtlas } from '../../utils/sigwxSymbols';
 import { createStationDotsLayer, createStationLabelsLayer, createStationModelLayers } from './StationLayer';
@@ -65,6 +66,8 @@ export default function MapView() {
   const maxWindBarbs = useAppStore((s) => s.maxWindBarbs);
   const sigwxFeatures = useAppStore((s) => s.sigwxFeatures);
   const sigwxVisible = useAppStore((s) => s.sigwxVisible);
+  const satelliteData = useAppStore((s) => s.satelliteData);
+  const satelliteVisible = useAppStore((s) => s.satelliteVisible);
 
   const handleWindHover = useCallback((info: { object?: WindPoint; x: number; y: number }) => {
     if (info.object) {
@@ -195,6 +198,12 @@ export default function MapView() {
 
     const layers: Layer[] = [];
 
+    // Satellite imagery (very bottom — below everything)
+    if (satelliteVisible && satelliteData) {
+      const satLayer = createSatelliteLayer(satelliteData);
+      if (satLayer) layers.push(satLayer);
+    }
+
     // Height contours (bottom)
     if (heightVisible && heightContours) {
       layers.push(...createHeightLayers(heightContours));
@@ -301,7 +310,7 @@ export default function MapView() {
     }
 
     overlayRef.current.setProps({ layers });
-  }, [windData, windVisible, mapZoom, atlasUrl, stationBarbAtlasUrl, coverAtlasUrl, coverIconMapping, iconMapping, handleWindHover, temperatureContours, temperatureVisible, heightContours, heightVisible, humidityContours, humidityVisible, stationData, stationVisible, tropopauseContours, tropopauseVisible, maxWindContours, maxWindVisible, maxWindBarbs, jetBarbAtlasUrl, sigwxFeatures, sigwxVisible, sigwxAtlas]);
+  }, [windData, windVisible, mapZoom, atlasUrl, stationBarbAtlasUrl, coverAtlasUrl, coverIconMapping, iconMapping, handleWindHover, temperatureContours, temperatureVisible, heightContours, heightVisible, humidityContours, humidityVisible, stationData, stationVisible, tropopauseContours, tropopauseVisible, maxWindContours, maxWindVisible, maxWindBarbs, jetBarbAtlasUrl, sigwxFeatures, sigwxVisible, sigwxAtlas, satelliteData, satelliteVisible]);
 
   return (
     <>

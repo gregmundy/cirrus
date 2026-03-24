@@ -58,6 +58,11 @@ export default function Toolbar() {
   const sigwxVisible = useAppStore((s) => s.sigwxVisible);
   const sigwxLoading = useAppStore((s) => s.sigwxLoading);
   const toggleSigwx = useAppStore((s) => s.toggleSigwx);
+  const satelliteVisible = useAppStore((s) => s.satelliteVisible);
+  const satelliteLoading = useAppStore((s) => s.satelliteLoading);
+  const satelliteChannel = useAppStore((s) => s.satelliteChannel);
+  const toggleSatellite = useAppStore((s) => s.toggleSatellite);
+  const setSatelliteChannel = useAppStore((s) => s.setSatelliteChannel);
   const mapGoTo = useAppStore((s) => s.mapGoTo);
   const mapFitBounds = useAppStore((s) => s.mapFitBounds);
 
@@ -165,6 +170,24 @@ export default function Toolbar() {
       >
         SIGWX {sigwxLoading ? '...' : sigwxVisible ? 'ON' : 'OFF'}
       </button>
+
+      <button
+        className={satelliteVisible ? 'toggle-btn active' : 'toggle-btn'}
+        onClick={toggleSatellite}
+      >
+        Sat {satelliteLoading ? '...' : satelliteVisible ? 'ON' : 'OFF'}
+      </button>
+
+      {satelliteVisible && (
+        <select
+          value={satelliteChannel}
+          onChange={(e) => setSatelliteChannel(Number(e.target.value))}
+        >
+          <option value={13}>IR</option>
+          <option value={2}>Vis</option>
+          <option value={8}>WV</option>
+        </select>
+      )}
 
       <GoToLocation
         onGoTo={(lat, lon) => mapGoTo?.(lat, lon)}
