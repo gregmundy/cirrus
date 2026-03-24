@@ -9,6 +9,7 @@ import type { WindPoint } from '../../stores/appStore';
 import { getWindBarbKey, generateWindBarbMapping } from '../../utils/windBarbs';
 import { getWindBarbAtlas, getStationWindBarbAtlas, getJetWindBarbAtlas } from '../../utils/windBarbAtlas';
 import { createTemperatureLayers, createHeightLayers, createHumidityLayers, createTropopauseLayers, createMaxWindIsotachLayers } from './ContourLayer';
+import { createSigwxLayers } from './SigwxLayer';
 import { createStationDotsLayer, createStationLabelsLayer, createStationModelLayers } from './StationLayer';
 import { getStationModelAtlas } from '../../utils/stationModelAtlas';
 import type { StationModelMapping } from '../../utils/stationModelAtlas';
@@ -59,6 +60,8 @@ export default function MapView() {
   const maxWindContours = useAppStore((s) => s.maxWindContours);
   const maxWindVisible = useAppStore((s) => s.maxWindVisible);
   const maxWindBarbs = useAppStore((s) => s.maxWindBarbs);
+  const sigwxFeatures = useAppStore((s) => s.sigwxFeatures);
+  const sigwxVisible = useAppStore((s) => s.sigwxVisible);
 
   const handleWindHover = useCallback((info: { object?: WindPoint; x: number; y: number }) => {
     if (info.object) {
@@ -236,6 +239,11 @@ export default function MapView() {
       }));
     }
 
+    // SIGWX features (polygons, lines, points)
+    if (sigwxVisible && sigwxFeatures.length > 0) {
+      layers.push(...createSigwxLayers(sigwxFeatures));
+    }
+
     // Wind barbs (top)
     if (windVisible && windData.length > 0) {
       const stride = windBarbStride(mapZoom);
@@ -283,7 +291,7 @@ export default function MapView() {
     }
 
     overlayRef.current.setProps({ layers });
-  }, [windData, windVisible, mapZoom, atlasUrl, stationBarbAtlasUrl, coverAtlasUrl, coverIconMapping, iconMapping, handleWindHover, temperatureContours, temperatureVisible, heightContours, heightVisible, humidityContours, humidityVisible, stationData, stationVisible, tropopauseContours, tropopauseVisible, maxWindContours, maxWindVisible, maxWindBarbs, jetBarbAtlasUrl]);
+  }, [windData, windVisible, mapZoom, atlasUrl, stationBarbAtlasUrl, coverAtlasUrl, coverIconMapping, iconMapping, handleWindHover, temperatureContours, temperatureVisible, heightContours, heightVisible, humidityContours, humidityVisible, stationData, stationVisible, tropopauseContours, tropopauseVisible, maxWindContours, maxWindVisible, maxWindBarbs, jetBarbAtlasUrl, sigwxFeatures, sigwxVisible]);
 
   return (
     <>

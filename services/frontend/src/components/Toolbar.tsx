@@ -55,6 +55,9 @@ export default function Toolbar() {
   const maxWindVisible = useAppStore((s) => s.maxWindVisible);
   const maxWindLoading = useAppStore((s) => s.maxWindLoading);
   const toggleMaxWind = useAppStore((s) => s.toggleMaxWind);
+  const sigwxVisible = useAppStore((s) => s.sigwxVisible);
+  const sigwxLoading = useAppStore((s) => s.sigwxLoading);
+  const toggleSigwx = useAppStore((s) => s.toggleSigwx);
   const mapGoTo = useAppStore((s) => s.mapGoTo);
   const mapFitBounds = useAppStore((s) => s.mapFitBounds);
 
@@ -154,6 +157,13 @@ export default function Toolbar() {
         onClick={toggleMaxWind}
       >
         Jet {maxWindLoading ? '...' : maxWindVisible ? 'ON' : 'OFF'}
+      </button>
+
+      <button
+        className={sigwxVisible ? 'toggle-btn active' : 'toggle-btn'}
+        onClick={toggleSigwx}
+      >
+        SIGWX {sigwxLoading ? '...' : sigwxVisible ? 'ON' : 'OFF'}
       </button>
 
       <GoToLocation

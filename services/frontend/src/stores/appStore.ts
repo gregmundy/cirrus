@@ -120,6 +120,14 @@ interface AppState {
   toggleMaxWind: () => void;
   fetchMaxWindData: () => Promise<void>;
 
+  // SIGWX
+  sigwxVisible: boolean;
+  sigwxLoading: boolean;
+  sigwxError: string | null;
+  sigwxFeatures: any[];
+  toggleSigwx: () => void;
+  fetchSigwxData: () => Promise<void>;
+
   // Actions
   fetchMeta: () => Promise<void>;
   fetchWindData: () => Promise<void>;
@@ -257,6 +265,11 @@ export const useAppStore = create<AppState>((set, get) => ({
   maxWindError: null,
   maxWindContours: null,
   maxWindBarbs: [],
+
+  sigwxVisible: false,
+  sigwxLoading: false,
+  sigwxError: null,
+  sigwxFeatures: [],
 
   toggleStations: () => {
     const wasVisible = get().stationVisible;
@@ -486,6 +499,29 @@ export const useAppStore = create<AppState>((set, get) => ({
     }
   },
 
+  toggleSigwx: () => {
+    const wasVisible = get().sigwxVisible;
+    set({ sigwxVisible: !wasVisible });
+    if (!wasVisible && get().sigwxFeatures.length === 0) {
+      get().fetchSigwxData();
+    }
+  },
+
+  fetchSigwxData: async () => {
+    set({ sigwxLoading: true, sigwxError: null });
+    try {
+      const res = await fetch('/api/sigwx');
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      set({ sigwxFeatures: data.features ?? [], sigwxLoading: false });
+    } catch (err) {
+      set({
+        sigwxError: err instanceof Error ? err.message : 'Unknown error',
+        sigwxLoading: false,
+      });
+    }
+  },
+
   fetchTemperatureData: async () => {
     const { selectedRunTime, selectedForecastHour, selectedLevel } = get();
     set({ temperatureLoading: true, temperatureError: null });
@@ -608,39 +644,42 @@ export const useAppStore = create<AppState>((set, get) => ({
     set(updates);
     get().fetchWindData();
     // Clear cached contours
-    set({ temperatureContours: null, heightContours: null, humidityContours: null, tropopauseContours: null, tropopauseTempData: null, maxWindContours: null, maxWindBarbs: [] });
+    set({ temperatureContours: null, heightContours: null, humidityContours: null, tropopauseContours: null, tropopauseTempData: null, maxWindContours: null, maxWindBarbs: [], sigwxFeatures: [] });
     // Refetch visible layers
     if (get().temperatureVisible) get().fetchTemperatureData();
     if (get().heightVisible) get().fetchHeightData();
     if (get().humidityVisible) get().fetchHumidityData();
     if (get().tropopauseVisible) get().fetchTropopauseData();
     if (get().maxWindVisible) get().fetchMaxWindData();
+    if (get().sigwxVisible) get().fetchSigwxData();
   },
 
   setForecastHour: (h: number) => {
     set({ selectedForecastHour: h });
     get().fetchWindData();
     // Clear cached contours
-    set({ temperatureContours: null, heightContours: null, humidityContours: null, tropopauseContours: null, tropopauseTempData: null, maxWindContours: null, maxWindBarbs: [] });
+    set({ temperatureContours: null, heightContours: null, humidityContours: null, tropopauseContours: null, tropopauseTempData: null, maxWindContours: null, maxWindBarbs: [], sigwxFeatures: [] });
     // Refetch visible layers
     if (get().temperatureVisible) get().fetchTemperatureData();
     if (get().heightVisible) get().fetchHeightData();
     if (get().humidityVisible) get().fetchHumidityData();
     if (get().tropopauseVisible) get().fetchTropopauseData();
     if (get().maxWindVisible) get().fetchMaxWindData();
+    if (get().sigwxVisible) get().fetchSigwxData();
   },
 
   setLevel: (l: number) => {
     set({ selectedLevel: l });
     get().fetchWindData();
     // Clear cached contours
-    set({ temperatureContours: null, heightContours: null, humidityContours: null, tropopauseContours: null, tropopauseTempData: null, maxWindContours: null, maxWindBarbs: [] });
+    set({ temperatureContours: null, heightContours: null, humidityContours: null, tropopauseContours: null, tropopauseTempData: null, maxWindContours: null, maxWindBarbs: [], sigwxFeatures: [] });
     // Refetch visible layers
     if (get().temperatureVisible) get().fetchTemperatureData();
     if (get().heightVisible) get().fetchHeightData();
     if (get().humidityVisible) get().fetchHumidityData();
     if (get().tropopauseVisible) get().fetchTropopauseData();
     if (get().maxWindVisible) get().fetchMaxWindData();
+    if (get().sigwxVisible) get().fetchSigwxData();
   },
 
   toggleWind: () => set((s) => ({ windVisible: !s.windVisible })),
