@@ -17,7 +17,6 @@ export function interpolateSpline(
 ): [number, number][] {
   if (points.length < 3) return points;
 
-  const n = points.length;
   const lons = points.map((p) => p[0]);
   const lats = points.map((p) => p[1]);
 
