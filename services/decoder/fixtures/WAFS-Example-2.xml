@@ -1,0 +1,267 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Synthetic WAFS SIGWX example — Area E (Europe/N Atlantic) features -->
+<iwxxm:WAFSSignificantWeatherForecast
+    xmlns:iwxxm="http://icao.int/iwxxm/2025-2"
+    xmlns:xlink="http://www.w3.org/1999/xlink"
+    xmlns:gml="http://www.opengis.net/gml/3.2"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    gml:id="uuid.synth-001" reportStatus="NORMAL" permissibleUsage="OPERATIONAL">
+
+    <gml:identifier codeSpace="http://wafs/sigwxfc">synth-example-002</gml:identifier>
+
+    <iwxxm:boundingPeriod>
+        <gml:TimePeriod gml:id="uuid.synth-bp">
+            <gml:beginPosition>2026-03-23T00:00:00Z</gml:beginPosition>
+            <gml:endPosition>2026-03-24T00:00:00Z</gml:endPosition>
+        </gml:TimePeriod>
+    </iwxxm:boundingPeriod>
+
+    <iwxxm:boundingVolume>
+        <iwxxm:ElevatedEnvelope>
+            <gml:lowerCorner srsDimension="2" axisLabels="Lat Long" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">-90 -180</gml:lowerCorner>
+            <gml:upperCorner srsDimension="2" axisLabels="Lat Long" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">90 180</gml:upperCorner>
+            <iwxxm:upperElevation uom="FL">600</iwxxm:upperElevation>
+            <iwxxm:upperVerticalReference>STD</iwxxm:upperVerticalReference>
+            <iwxxm:lowerElevation uom="FL">250</iwxxm:lowerElevation>
+            <iwxxm:lowerVerticalReference>STD</iwxxm:lowerVerticalReference>
+        </iwxxm:ElevatedEnvelope>
+    </iwxxm:boundingVolume>
+
+    <iwxxm:phenomenaList xlink:href="http://codes.wmo.int/iwxxm/MeteorologicalFeature/JETSTREAM"/>
+    <iwxxm:phenomenaList xlink:href="http://codes.wmo.int/iwxxm/MeteorologicalFeature/TURBULENCE"/>
+    <iwxxm:phenomenaList xlink:href="http://codes.wmo.int/iwxxm/MeteorologicalFeature/CLOUD"/>
+    <iwxxm:phenomenaList xlink:href="http://codes.wmo.int/iwxxm/MeteorologicalFeature/TROPOPAUSE"/>
+
+    <iwxxm:issueTime>
+        <gml:TimeInstant gml:id="uuid.synth-it">
+            <gml:timePosition>2026-03-22T18:00:00Z</gml:timePosition>
+        </gml:TimeInstant>
+    </iwxxm:issueTime>
+
+    <iwxxm:originatingCentre>
+        <iwxxm:WorldAreaForecastCentre>London</iwxxm:WorldAreaForecastCentre>
+    </iwxxm:originatingCentre>
+
+    <iwxxm:phenomenonCategory>weatherForecasts</iwxxm:phenomenonCategory>
+
+    <iwxxm:phenomenonBaseTime>
+        <gml:TimeInstant gml:id="uuid.synth-bt">
+            <gml:timePosition>2026-03-22T12:00:00Z</gml:timePosition>
+        </gml:TimeInstant>
+    </iwxxm:phenomenonBaseTime>
+
+    <iwxxm:phenomenonTime>
+        <gml:TimeInstant gml:id="uuid.synth-pt">
+            <gml:timePosition>2026-03-23T12:00:00Z</gml:timePosition>
+        </gml:TimeInstant>
+    </iwxxm:phenomenonTime>
+
+    <!-- Jet stream across N Atlantic into Europe -->
+    <iwxxm:feature>
+        <iwxxm:MeteorologicalFeature gml:id="uuid.synth-jet1">
+            <gml:identifier codeSpace="http://wafs/sigwxobj">synth-jet-001</gml:identifier>
+            <iwxxm:phenomenon xlink:href="http://codes.wmo.int/iwxxm/MeteorologicalFeature/JETSTREAM"/>
+            <iwxxm:phenomenonGeometry>
+                <gml:Curve gml:id="uuid.synth-jet1-curve" srsDimension="2" axisLabels="Lat Long" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                    <gml:segments>
+                        <gml:CubicSpline>
+                            <gml:posList>42.0 -55.0 44.5 -45.0 48.0 -35.0 50.5 -25.0 52.0 -15.0 53.5 -5.0 54.0 5.0 52.5 15.0 50.0 22.0</gml:posList>
+                            <gml:vectorAtStart>1.0 2.0</gml:vectorAtStart>
+                            <gml:vectorAtEnd>2.0 3.0</gml:vectorAtEnd>
+                        </gml:CubicSpline>
+                    </gml:segments>
+                </gml:Curve>
+            </iwxxm:phenomenonGeometry>
+            <iwxxm:phenomenonProperty>
+                <iwxxm:WAFSJetStreamWindSymbol gml:id="uuid.synth-jet1-ws1">
+                    <iwxxm:location>
+                        <iwxxm:ElevatedPoint gml:id="uuid.synth-jet1-p1" srsDimension="2" axisLabels="Lat Long" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                            <gml:pos>44.5 -45.0</gml:pos>
+                            <iwxxm:elevation uom="M">10668</iwxxm:elevation>
+                            <iwxxm:verticalReference>MSL</iwxxm:verticalReference>
+                        </iwxxm:ElevatedPoint>
+                    </iwxxm:location>
+                    <iwxxm:windSpeed uom="m/s">46.3</iwxxm:windSpeed>
+                </iwxxm:WAFSJetStreamWindSymbol>
+            </iwxxm:phenomenonProperty>
+            <iwxxm:phenomenonProperty>
+                <iwxxm:WAFSJetStreamWindSymbol gml:id="uuid.synth-jet1-ws2">
+                    <iwxxm:location>
+                        <iwxxm:ElevatedPoint gml:id="uuid.synth-jet1-p2" srsDimension="2" axisLabels="Lat Long" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                            <gml:pos>50.5 -25.0</gml:pos>
+                            <iwxxm:elevation uom="M">10972</iwxxm:elevation>
+                            <iwxxm:verticalReference>MSL</iwxxm:verticalReference>
+                        </iwxxm:ElevatedPoint>
+                    </iwxxm:location>
+                    <iwxxm:windSpeed uom="m/s">72.0</iwxxm:windSpeed>
+                    <iwxxm:IsotachUpperElevation uom="M">12802</iwxxm:IsotachUpperElevation>
+                    <iwxxm:IsotachUpperVerticalReference>MSL</iwxxm:IsotachUpperVerticalReference>
+                    <iwxxm:IsotachLowerElevation uom="M">9144</iwxxm:IsotachLowerElevation>
+                    <iwxxm:IsotachLowerVerticalReference>MSL</iwxxm:IsotachLowerVerticalReference>
+                </iwxxm:WAFSJetStreamWindSymbol>
+            </iwxxm:phenomenonProperty>
+            <iwxxm:phenomenonProperty>
+                <iwxxm:WAFSJetStreamWindSymbol gml:id="uuid.synth-jet1-ws3">
+                    <iwxxm:location>
+                        <iwxxm:ElevatedPoint gml:id="uuid.synth-jet1-p3" srsDimension="2" axisLabels="Lat Long" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                            <gml:pos>53.5 -5.0</gml:pos>
+                            <iwxxm:elevation uom="M">10668</iwxxm:elevation>
+                            <iwxxm:verticalReference>MSL</iwxxm:verticalReference>
+                        </iwxxm:ElevatedPoint>
+                    </iwxxm:location>
+                    <iwxxm:windSpeed uom="m/s">51.5</iwxxm:windSpeed>
+                </iwxxm:WAFSJetStreamWindSymbol>
+            </iwxxm:phenomenonProperty>
+        </iwxxm:MeteorologicalFeature>
+    </iwxxm:feature>
+
+    <!-- Moderate turbulence over N Atlantic associated with jet -->
+    <iwxxm:feature>
+        <iwxxm:MeteorologicalFeature gml:id="uuid.synth-turb1">
+            <gml:identifier codeSpace="http://wafs/sigwxobj">synth-turb-001</gml:identifier>
+            <iwxxm:phenomenon xlink:href="http://codes.wmo.int/iwxxm/MeteorologicalFeature/TURBULENCE"/>
+            <iwxxm:phenomenonGeometry>
+                <iwxxm:ElevatedVolume gml:id="uuid.synth-turb1-vol" srsDimension="2" axisLabels="Lat Long" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                    <gml:patches>
+                        <gml:PolygonPatch>
+                            <gml:exterior>
+                                <gml:Ring>
+                                    <gml:curveMember>
+                                        <gml:Curve gml:id="uuid.synth-turb1-c" srsDimension="2" axisLabels="Lat Long" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                                            <gml:segments>
+                                                <gml:CubicSpline>
+                                                    <gml:posList>46.0 -40.0 49.0 -32.0 53.0 -28.0 56.0 -22.0 55.0 -14.0 52.0 -10.0 48.0 -18.0 45.0 -28.0 44.0 -36.0 46.0 -40.0</gml:posList>
+                                                    <gml:vectorAtStart>1.0 2.0</gml:vectorAtStart>
+                                                    <gml:vectorAtEnd>3.0 4.0</gml:vectorAtEnd>
+                                                </gml:CubicSpline>
+                                            </gml:segments>
+                                        </gml:Curve>
+                                    </gml:curveMember>
+                                </gml:Ring>
+                            </gml:exterior>
+                        </gml:PolygonPatch>
+                    </gml:patches>
+                    <iwxxm:upperElevation uom="FL">420</iwxxm:upperElevation>
+                    <iwxxm:upperVerticalReference>STD</iwxxm:upperVerticalReference>
+                    <iwxxm:lowerElevation uom="FL">300</iwxxm:lowerElevation>
+                    <iwxxm:lowerVerticalReference>STD</iwxxm:lowerVerticalReference>
+                </iwxxm:ElevatedVolume>
+            </iwxxm:phenomenonGeometry>
+            <iwxxm:phenomenonProperty>
+                <iwxxm:DegreeOfTurbulence xlink:href="http://codes.wmo.int/bufr4/codeflag/0-11-030/8"/>
+            </iwxxm:phenomenonProperty>
+        </iwxxm:MeteorologicalFeature>
+    </iwxxm:feature>
+
+    <!-- Severe turbulence embedded within moderate -->
+    <iwxxm:feature>
+        <iwxxm:MeteorologicalFeature gml:id="uuid.synth-turb2">
+            <gml:identifier codeSpace="http://wafs/sigwxobj">synth-turb-002</gml:identifier>
+            <iwxxm:phenomenon xlink:href="http://codes.wmo.int/iwxxm/MeteorologicalFeature/TURBULENCE"/>
+            <iwxxm:phenomenonGeometry>
+                <iwxxm:ElevatedVolume gml:id="uuid.synth-turb2-vol" srsDimension="2" axisLabels="Lat Long" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                    <gml:patches>
+                        <gml:PolygonPatch>
+                            <gml:exterior>
+                                <gml:Ring>
+                                    <gml:curveMember>
+                                        <gml:Curve gml:id="uuid.synth-turb2-c" srsDimension="2" axisLabels="Lat Long" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                                            <gml:segments>
+                                                <gml:CubicSpline>
+                                                    <gml:posList>49.0 -30.0 51.5 -26.0 53.0 -20.0 51.0 -16.0 49.0 -22.0 48.0 -28.0 49.0 -30.0</gml:posList>
+                                                    <gml:vectorAtStart>1.0 2.0</gml:vectorAtStart>
+                                                    <gml:vectorAtEnd>3.0 4.0</gml:vectorAtEnd>
+                                                </gml:CubicSpline>
+                                            </gml:segments>
+                                        </gml:Curve>
+                                    </gml:curveMember>
+                                </gml:Ring>
+                            </gml:exterior>
+                        </gml:PolygonPatch>
+                    </gml:patches>
+                    <iwxxm:upperElevation uom="FL">400</iwxxm:upperElevation>
+                    <iwxxm:upperVerticalReference>STD</iwxxm:upperVerticalReference>
+                    <iwxxm:lowerElevation uom="FL">320</iwxxm:lowerElevation>
+                    <iwxxm:lowerVerticalReference>STD</iwxxm:lowerVerticalReference>
+                </iwxxm:ElevatedVolume>
+            </iwxxm:phenomenonGeometry>
+            <iwxxm:phenomenonProperty>
+                <iwxxm:DegreeOfTurbulence xlink:href="http://codes.wmo.int/bufr4/codeflag/0-11-030/10"/>
+            </iwxxm:phenomenonProperty>
+        </iwxxm:MeteorologicalFeature>
+    </iwxxm:feature>
+
+    <!-- CB over W Mediterranean -->
+    <iwxxm:feature>
+        <iwxxm:MeteorologicalFeature gml:id="uuid.synth-cb1">
+            <gml:identifier codeSpace="http://wafs/sigwxobj">synth-cb-001</gml:identifier>
+            <iwxxm:phenomenon xlink:href="http://codes.wmo.int/iwxxm/MeteorologicalFeature/CLOUD"/>
+            <iwxxm:phenomenonGeometry>
+                <iwxxm:ElevatedVolume gml:id="uuid.synth-cb1-vol" srsDimension="2" axisLabels="Lat Long" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                    <gml:patches>
+                        <gml:PolygonPatch>
+                            <gml:exterior>
+                                <gml:Ring>
+                                    <gml:curveMember>
+                                        <gml:Curve gml:id="uuid.synth-cb1-c" srsDimension="2" axisLabels="Lat Long" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                                            <gml:segments>
+                                                <gml:CubicSpline>
+                                                    <gml:posList>38.0 -2.0 40.0 2.0 42.0 6.0 40.5 10.0 37.0 12.0 34.0 8.0 33.0 3.0 35.0 -1.0 38.0 -2.0</gml:posList>
+                                                    <gml:vectorAtStart>1.0 2.0</gml:vectorAtStart>
+                                                    <gml:vectorAtEnd>3.0 4.0</gml:vectorAtEnd>
+                                                </gml:CubicSpline>
+                                            </gml:segments>
+                                        </gml:Curve>
+                                    </gml:curveMember>
+                                </gml:Ring>
+                            </gml:exterior>
+                        </gml:PolygonPatch>
+                    </gml:patches>
+                    <iwxxm:upperElevation uom="FL">450</iwxxm:upperElevation>
+                    <iwxxm:upperVerticalReference>STD</iwxxm:upperVerticalReference>
+                    <iwxxm:lowerElevation xsi:nil="true" nilReason="http://codes.wmo.int/iwxxm/nil/inapplicable"/>
+                </iwxxm:ElevatedVolume>
+            </iwxxm:phenomenonGeometry>
+            <iwxxm:phenomenonProperty>
+                <iwxxm:CloudDistribution xlink:href="http://codes.wmo.int/bufr4/codeflag/0-20-008/11"/>
+            </iwxxm:phenomenonProperty>
+            <iwxxm:phenomenonProperty>
+                <iwxxm:CloudType xlink:href="http://codes.wmo.int/bufr4/codeflag/0-20-012/9"/>
+            </iwxxm:phenomenonProperty>
+        </iwxxm:MeteorologicalFeature>
+    </iwxxm:feature>
+
+    <!-- Tropopause region over E Atlantic -->
+    <iwxxm:feature>
+        <iwxxm:MeteorologicalFeature gml:id="uuid.synth-trop1">
+            <gml:identifier codeSpace="http://wafs/sigwxobj">synth-trop-001</gml:identifier>
+            <iwxxm:phenomenon xlink:href="http://codes.wmo.int/iwxxm/MeteorologicalFeature/TROPOPAUSE"/>
+            <iwxxm:phenomenonGeometry>
+                <gml:Polygon gml:id="uuid.synth-trop1-poly" srsDimension="2" axisLabels="Lat Long" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                    <gml:exterior>
+                        <gml:Ring>
+                            <gml:curveMember>
+                                <gml:Curve gml:id="uuid.synth-trop1-c" srsDimension="2" axisLabels="Lat Long" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                                    <gml:segments>
+                                        <gml:CubicSpline>
+                                            <gml:posList>55.0 -30.0 58.0 -20.0 60.0 -10.0 58.0 0.0 55.0 5.0 50.0 0.0 48.0 -10.0 50.0 -20.0 53.0 -28.0 55.0 -30.0</gml:posList>
+                                            <gml:vectorAtStart>1.0 2.0</gml:vectorAtStart>
+                                            <gml:vectorAtEnd>3.0 4.0</gml:vectorAtEnd>
+                                        </gml:CubicSpline>
+                                    </gml:segments>
+                                </gml:Curve>
+                            </gml:curveMember>
+                        </gml:Ring>
+                    </gml:exterior>
+                </gml:Polygon>
+            </iwxxm:phenomenonGeometry>
+            <iwxxm:phenomenonProperty>
+                <iwxxm:ElevatedLevel gml:id="uuid.synth-trop1-el">
+                    <iwxxm:elevation uom="M">10668</iwxxm:elevation>
+                    <iwxxm:verticalReference>MSL</iwxxm:verticalReference>
+                </iwxxm:ElevatedLevel>
+            </iwxxm:phenomenonProperty>
+        </iwxxm:MeteorologicalFeature>
+    </iwxxm:feature>
+
+</iwxxm:WAFSSignificantWeatherForecast>
