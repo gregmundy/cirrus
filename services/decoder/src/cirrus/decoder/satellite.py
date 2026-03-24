@@ -20,7 +20,7 @@ from botocore.config import Config
 
 logger = logging.getLogger(__name__)
 
-BUCKET = "noaa-goes16"
+BUCKET = "noaa-goes19"
 PRODUCT = "ABI-L2-CMIPC"  # CONUS CMI
 
 # Channels to acquire
