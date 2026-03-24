@@ -20,14 +20,14 @@ export interface SatelliteData {
 /** Color ramp: array of [r, g, b] stops from low to high value. */
 type ColorRamp = [number, number, number][];
 
-// IR: cold (white/bright) to warm (dark) — inverted greyscale
+// IR: cold (white/bright) to warm (dark) — high contrast inverted greyscale
 const IR_RAMP: ColorRamp = [
-  [255, 255, 255],  // coldest (high clouds)
-  [200, 200, 200],
-  [150, 150, 150],
+  [255, 255, 255],  // coldest (high clouds) — pure white
+  [230, 230, 230],
+  [180, 180, 180],
   [100, 100, 100],
-  [50, 50, 50],
-  [20, 20, 20],     // warmest (surface)
+  [40, 40, 40],
+  [5, 5, 10],       // warmest (surface) — near black
 ];
 
 // Visible: dark (clear) to bright (cloud)
@@ -104,7 +104,7 @@ export function createSatelliteLayer(data: SatelliteData, opacity: number = 0.7)
         pixels[dstIdx] = r;
         pixels[dstIdx + 1] = g;
         pixels[dstIdx + 2] = b;
-        pixels[dstIdx + 3] = 200; // semi-transparent so coastlines/labels show through
+        pixels[dstIdx + 3] = 150; // semi-transparent so coastlines/labels show through
       }
     }
   }
