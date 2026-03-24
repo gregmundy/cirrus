@@ -1,3 +1,5 @@
+import { useState } from 'react';
+
 interface IcaoArea {
   code: string;
   name: string;
@@ -25,22 +27,23 @@ interface IcaoAreaSelectorProps {
 }
 
 export default function IcaoAreaSelector({ onFitBounds }: IcaoAreaSelectorProps) {
+  const [selected, setSelected] = useState('');
+
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const code = e.target.value;
+    setSelected(code);
     if (!code) return;
     const area = ICAO_AREAS.find((a) => a.code === code);
     if (area) {
       const [south, west, north, east] = area.bounds;
       onFitBounds(south, west, north, east);
     }
-    // Reset to blank so the same area can be re-selected
-    e.target.value = '';
   };
 
   return (
     <label>
       Area:
-      <select onChange={handleChange} defaultValue="">
+      <select value={selected} onChange={handleChange}>
         <option value="">—</option>
         {ICAO_AREAS.map((a) => (
           <option key={a.code} value={a.code}>
