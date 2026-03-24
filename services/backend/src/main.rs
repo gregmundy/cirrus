@@ -2,6 +2,7 @@ mod gridded;
 mod maxwind;
 mod meta;
 mod opmet;
+mod sigwx;
 mod wind;
 
 use axum::{routing::get, Json, Router};
@@ -43,6 +44,7 @@ async fn main() {
         .route("/api/gridded/meta", get(meta::get_meta))
         .route("/api/maxwind", get(maxwind::get_maxwind))
         .route("/api/opmet/stations", get(opmet::get_stations))
+        .route("/api/sigwx", get(sigwx::get_sigwx))
         .with_state(pool);
 
     let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{PORT}"))
