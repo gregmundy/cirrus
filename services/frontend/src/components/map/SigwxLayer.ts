@@ -2,7 +2,7 @@ import { PathLayer, TextLayer, IconLayer, SolidPolygonLayer } from '@deck.gl/lay
 import { PathStyleExtension } from '@deck.gl/extensions';
 import type { Layer } from '@deck.gl/core';
 import { interpolateSpline, generateScallopedRing } from '../../utils/splineInterpolation';
-import { getWindBarbKey, generateWindBarbMapping } from '../../utils/windBarbs';
+import { getWindBarbKey } from '../../utils/windBarbs';
 import type { SigwxSymbolAtlas } from '../../utils/sigwxSymbols';
 
 interface SigwxGeoJSON {
