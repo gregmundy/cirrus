@@ -92,8 +92,8 @@ export function createSatelliteLayer(data: SatelliteData, opacity: number = 0.7)
       const dstIdx = srcIdx * 4;
       const val = values[srcIdx];
 
-      if (val === 0 || isNaN(val)) {
-        // Transparent for no-data
+      if (val <= -999 || isNaN(val)) {
+        // Transparent for no-data / outside coverage
         pixels[dstIdx] = 0;
         pixels[dstIdx + 1] = 0;
         pixels[dstIdx + 2] = 0;

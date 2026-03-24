@@ -147,26 +147,34 @@ def reproject_goes(nc_path: str) -> dict:
     lat[~valid] = np.nan
     lon[~valid] = np.nan
 
-    # Resample to regular CONUS grid using bilinear interpolation
+    # Resample to regular CONUS grid using KDTree + smoothing
     target_lat = np.linspace(TARGET_LAT_N, TARGET_LAT_S, TARGET_NJ)
     target_lon = np.linspace(TARGET_LON_W, TARGET_LON_E, TARGET_NI)
 
-    from scipy.interpolate import griddata
+    from scipy.spatial import cKDTree
+    from scipy.ndimage import uniform_filter
 
     src_lat = lat.flatten()
     src_lon = lon.flatten()
     src_val = cmi.flatten()
-    mask = ~(np.isnan(src_lat) | np.isnan(src_lon) | np.isnan(src_val))
+    mask = ~(np.isnan(src_lat) | np.isnan(src_lon))
 
+    tree = cKDTree(np.column_stack([src_lon[mask], src_lat[mask]]))
     tlon, tlat = np.meshgrid(target_lon, target_lat)
-    resampled = griddata(
-        np.column_stack([src_lon[mask], src_lat[mask]]),
-        src_val[mask],
-        (tlon, tlat),
-        method="linear",
-        fill_value=0.0,
-    )
-    np.nan_to_num(resampled, copy=False, nan=0.0)
+    target_pts = np.column_stack([tlon.flatten(), tlat.flatten()])
+
+    distances, indices = tree.query(target_pts)
+    resampled = src_val[mask][indices].reshape(TARGET_NJ, TARGET_NI)
+
+    # Mark pixels too far from any source point as outside satellite coverage
+    max_dist = 0.5  # degrees
+    outside = distances.reshape(TARGET_NJ, TARGET_NI) > max_dist
+
+    # Smooth with 3x3 box filter to eliminate scan-line artifacts
+    resampled = uniform_filter(resampled, size=3)
+
+    # Set outside-coverage to NaN (will be transparent in frontend)
+    resampled[outside] = np.nan
 
     ds.close()
 
@@ -181,9 +189,9 @@ def reproject_goes(nc_path: str) -> dict:
         "lon_first": TARGET_LON_W,
         "d_lat": -(TARGET_LAT_N - TARGET_LAT_S) / (TARGET_NJ - 1),
         "d_lon": (TARGET_LON_E - TARGET_LON_W) / (TARGET_NI - 1),
-        "value_min": float(np.min(resampled)),
-        "value_max": float(np.max(resampled)),
-        "values": resampled.astype(np.float32).tobytes().hex(),
+        "value_min": float(np.nanmin(resampled)),
+        "value_max": float(np.nanmax(resampled)),
+        "values": np.nan_to_num(resampled, nan=-999.0).astype(np.float32).tobytes().hex(),
     }
 
 
