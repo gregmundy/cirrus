@@ -250,6 +250,7 @@ export default function MapView() {
         sigwxAtlas,
         jetBarbAtlasUrl,
         iconMapping as Record<string, { x: number; y: number; width: number; height: number }>,
+        mapZoom,
       ));
     }
 

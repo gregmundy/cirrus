@@ -72,12 +72,21 @@ function bearing(p1: [number, number], p2: [number, number]): number {
   return (Math.atan2(dx, dy) * 180) / Math.PI;
 }
 
+/** Compute zoom-responsive scale factor for SIGWX icons and text. */
+function sigwxScale(zoom: number): number {
+  // At zoom 3 (global view): scale 1.0
+  // Each zoom level above 3 adds 20% size
+  return 1.0 + Math.max(0, zoom - 3) * 0.2;
+}
+
 export function createSigwxLayers(
   features: SigwxGeoJSON[],
   sigwxAtlas?: SigwxSymbolAtlas | null,
   jetBarbAtlas?: string | null,
   jetBarbMapping?: Record<string, { x: number; y: number; width: number; height: number }> | null,
+  mapZoom: number = 4,
 ): Layer[] {
+  const scale = sigwxScale(mapZoom);
   const layers: Layer[] = [];
 
   // Group by phenomenon
@@ -155,7 +164,7 @@ export function createSigwxLayers(
         data: cloudLabels,
         getPosition: (d) => d.position,
         getText: (d) => d.text,
-        getSize: 13,
+        getSize: 13 * scale,
         getColor: [color[0], color[1], color[2], 255],
         getTextAnchor: 'middle',
         getAlignmentBaseline: 'center',
@@ -206,7 +215,7 @@ export function createSigwxLayers(
           data: turbSymbolData,
           getPosition: (d) => d.position,
           getIcon: (d) => d.icon,
-          getSize: 36,
+          getSize: 36 * scale,
           iconAtlas: sigwxAtlas.atlas,
           iconMapping: sigwxAtlas.mapping,
           sizeUnits: 'pixels',
@@ -232,7 +241,7 @@ export function createSigwxLayers(
         data: turbLabels,
         getPosition: (d) => d.position,
         getText: (d) => d.text,
-        getSize: 12,
+        getSize: 12 * scale,
         getColor: [color[0], color[1], color[2], 255],
         getTextAnchor: 'middle',
         getAlignmentBaseline: 'center',
@@ -240,7 +249,7 @@ export function createSigwxLayers(
         fontWeight: 'bold',
         sizeUnits: 'pixels',
         pickable: false,
-        getPixelOffset: [0, 10],
+        getPixelOffset: [0, 10 * scale],
         background: true,
         getBackgroundColor: [10, 15, 30, 180],
         backgroundPadding: [4, 2],
@@ -281,7 +290,7 @@ export function createSigwxLayers(
           data: iceSymbolData,
           getPosition: (d) => d.position,
           getIcon: (d) => d.icon,
-          getSize: 36,
+          getSize: 36 * scale,
           iconAtlas: sigwxAtlas.atlas,
           iconMapping: sigwxAtlas.mapping,
           sizeUnits: 'pixels',
@@ -306,7 +315,7 @@ export function createSigwxLayers(
         data: iceLabels,
         getPosition: (d) => d.position,
         getText: (d) => d.text,
-        getSize: 12,
+        getSize: 12 * scale,
         getColor: [color[0], color[1], color[2], 255],
         getTextAnchor: 'middle',
         getAlignmentBaseline: 'center',
@@ -314,7 +323,7 @@ export function createSigwxLayers(
         fontWeight: 'bold',
         sizeUnits: 'pixels',
         pickable: false,
-        getPixelOffset: [0, 10],
+        getPixelOffset: [0, 10 * scale],
         background: true,
         getBackgroundColor: [10, 15, 30, 180],
         backgroundPadding: [4, 2],
@@ -355,7 +364,7 @@ export function createSigwxLayers(
         data: tropLabels,
         getPosition: (d) => d.position,
         getText: (d) => d.text,
-        getSize: 12,
+        getSize: 12 * scale,
         getColor: [color[0], color[1], color[2], 255],
         getTextAnchor: 'middle',
         getAlignmentBaseline: 'center',
@@ -431,7 +440,7 @@ export function createSigwxLayers(
             getPosition: (d) => d.position,
             getIcon: (d) => getWindBarbKey(d.speed),
             getAngle: (d) => d.angle,
-            getSize: 44,
+            getSize: 44 * scale,
             iconAtlas: jetBarbAtlas,
             iconMapping: jetBarbMapping,
             sizeUnits: 'pixels',
@@ -463,7 +472,7 @@ export function createSigwxLayers(
           getPosition: (d) => d.position,
           getIcon: () => 'jet_arrow',
           getAngle: (d) => d.angle,
-          getSize: 28,
+          getSize: 28 * scale,
           iconAtlas: sigwxAtlas.atlas,
           iconMapping: sigwxAtlas.mapping,
           sizeUnits: 'pixels',
@@ -495,7 +504,7 @@ export function createSigwxLayers(
           data: flLabels,
           getPosition: (d) => d.position,
           getText: (d) => d.text,
-          getSize: 11,
+          getSize: 11 * scale,
           getColor: [jetColor[0], jetColor[1], jetColor[2], 255],
           getTextAnchor: 'start',
           getAlignmentBaseline: 'center',
@@ -503,7 +512,7 @@ export function createSigwxLayers(
           fontWeight: 'bold',
           sizeUnits: 'pixels',
           pickable: false,
-          getPixelOffset: [18, -8],
+          getPixelOffset: [18 * scale, -8 * scale],
           background: true,
           getBackgroundColor: [10, 15, 30, 200],
           backgroundPadding: [4, 2],
@@ -548,7 +557,7 @@ export function createSigwxLayers(
           data: pointData,
           getPosition: (d) => d.position,
           getIcon: (d) => d.icon,
-          getSize: 40,
+          getSize: 40 * scale,
           iconAtlas: sigwxAtlas.atlas,
           iconMapping: sigwxAtlas.mapping,
           sizeUnits: 'pixels',
@@ -560,7 +569,7 @@ export function createSigwxLayers(
           data: pointData,
           getPosition: (d) => d.position,
           getText: (d) => d.label,
-          getSize: 12,
+          getSize: 12 * scale,
           getColor: (d) => d.color,
           getTextAnchor: 'middle',
           getAlignmentBaseline: 'center',
@@ -568,7 +577,7 @@ export function createSigwxLayers(
           fontWeight: 'bold',
           sizeUnits: 'pixels',
           pickable: false,
-          getPixelOffset: [0, -28],
+          getPixelOffset: [0, -28 * scale],
           background: true,
           getBackgroundColor: [10, 15, 30, 200],
           backgroundPadding: [4, 2],
