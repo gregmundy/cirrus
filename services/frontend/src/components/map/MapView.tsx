@@ -170,7 +170,7 @@ export default function MapView() {
       (s, w, n, e) => map.fitBounds([[w, s], [e, n]], { padding: 20, duration: 1500 }),
     );
 
-    map.on('zoomend', () => setMapZoom(map.getZoom()));
+    map.on('zoom', () => setMapZoom(map.getZoom()));
 
     let lastCoordUpdate = 0;
     map.on('mousemove', (e) => {
