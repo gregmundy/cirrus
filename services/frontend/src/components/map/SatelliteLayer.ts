@@ -104,7 +104,7 @@ export function createSatelliteLayer(data: SatelliteData, opacity: number = 0.7)
         pixels[dstIdx] = r;
         pixels[dstIdx + 1] = g;
         pixels[dstIdx + 2] = b;
-        pixels[dstIdx + 3] = 255;
+        pixels[dstIdx + 3] = 200; // semi-transparent so coastlines/labels show through
       }
     }
   }
