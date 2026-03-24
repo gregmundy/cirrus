@@ -31,10 +31,10 @@ CHANNELS = {
 }
 
 # Output grid: CONUS coverage
-TARGET_LAT_N = 50.0
-TARGET_LAT_S = 24.0
-TARGET_LON_W = -125.0
-TARGET_LON_E = -66.0
+TARGET_LAT_N = 55.0
+TARGET_LAT_S = 15.0
+TARGET_LON_W = -150.0
+TARGET_LON_E = -55.0
 TARGET_NJ = 1000  # latitude points
 TARGET_NI = 1800  # longitude points
 
@@ -143,7 +143,7 @@ def reproject_goes(nc_path: str) -> dict:
     lat = np.degrees(
         np.arctan((r_eq / r_pol) ** 2 * sz / np.sqrt((H - sx) ** 2 + sy ** 2))
     )
-    lon = np.degrees(np.arctan(sy / (H - sx))) + lon0
+    lon = np.degrees(np.arctan2(sy, (H - sx))) + lon0
     lat[~valid] = np.nan
     lon[~valid] = np.nan
 
