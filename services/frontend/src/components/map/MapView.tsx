@@ -10,6 +10,8 @@ import { getWindBarbKey, generateWindBarbMapping } from '../../utils/windBarbs';
 import { getWindBarbAtlas, getStationWindBarbAtlas, getJetWindBarbAtlas } from '../../utils/windBarbAtlas';
 import { createTemperatureLayers, createHeightLayers, createHumidityLayers, createTropopauseLayers, createMaxWindIsotachLayers } from './ContourLayer';
 import { createSigwxLayers } from './SigwxLayer';
+import { getSigwxSymbolAtlas } from '../../utils/sigwxSymbols';
+import type { SigwxSymbolAtlas } from '../../utils/sigwxSymbols';
 import { createStationDotsLayer, createStationLabelsLayer, createStationModelLayers } from './StationLayer';
 import { getStationModelAtlas } from '../../utils/stationModelAtlas';
 import type { StationModelMapping } from '../../utils/stationModelAtlas';
@@ -27,6 +29,7 @@ export default function MapView() {
   const [coverAtlasUrl, setCoverAtlasUrl] = useState<string | null>(null);
   const [coverIconMapping, setCoverIconMapping] = useState<StationModelMapping | null>(null);
   const [jetBarbAtlasUrl, setJetBarbAtlasUrl] = useState<string | null>(null);
+  const [sigwxAtlas, setSigwxAtlas] = useState<SigwxSymbolAtlas | null>(null);
   const iconMapping = useMemo(() => generateWindBarbMapping(), []);
   const [selectedStation, setSelectedStation] = useState<{
     obs: StationObs; x: number; y: number;
@@ -82,6 +85,7 @@ export default function MapView() {
   useEffect(() => {
     getWindBarbAtlas().then(({ atlas }) => setAtlasUrl(atlas));
     getJetWindBarbAtlas().then(({ atlas }) => setJetBarbAtlasUrl(atlas));
+    getSigwxSymbolAtlas().then((a) => setSigwxAtlas(a));
     getStationWindBarbAtlas().then(({ atlas, mapping }) => {
       setStationBarbAtlasUrl(atlas);
       setStationBarbMapping(mapping);
@@ -241,7 +245,12 @@ export default function MapView() {
 
     // SIGWX features (polygons, lines, points)
     if (sigwxVisible && sigwxFeatures.length > 0) {
-      layers.push(...createSigwxLayers(sigwxFeatures));
+      layers.push(...createSigwxLayers(
+        sigwxFeatures,
+        sigwxAtlas,
+        jetBarbAtlasUrl,
+        iconMapping as Record<string, { x: number; y: number; width: number; height: number }>,
+      ));
     }
 
     // Wind barbs (top)
@@ -291,7 +300,7 @@ export default function MapView() {
     }
 
     overlayRef.current.setProps({ layers });
-  }, [windData, windVisible, mapZoom, atlasUrl, stationBarbAtlasUrl, coverAtlasUrl, coverIconMapping, iconMapping, handleWindHover, temperatureContours, temperatureVisible, heightContours, heightVisible, humidityContours, humidityVisible, stationData, stationVisible, tropopauseContours, tropopauseVisible, maxWindContours, maxWindVisible, maxWindBarbs, jetBarbAtlasUrl, sigwxFeatures, sigwxVisible]);
+  }, [windData, windVisible, mapZoom, atlasUrl, stationBarbAtlasUrl, coverAtlasUrl, coverIconMapping, iconMapping, handleWindHover, temperatureContours, temperatureVisible, heightContours, heightVisible, humidityContours, humidityVisible, stationData, stationVisible, tropopauseContours, tropopauseVisible, maxWindContours, maxWindVisible, maxWindBarbs, jetBarbAtlasUrl, sigwxFeatures, sigwxVisible, sigwxAtlas]);
 
   return (
     <>
