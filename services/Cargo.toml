@@ -1,5 +1,6 @@
 [workspace]
 members = ["acquisition", "backend", "alerting", "monitor"]
+exclude = ["frontend/src-tauri"]
 resolver = "2"
 
 [workspace.dependencies]
