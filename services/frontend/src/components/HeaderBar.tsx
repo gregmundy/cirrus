@@ -5,7 +5,12 @@ interface Workspace {
   name: string;
 }
 
-export default function HeaderBar() {
+interface HeaderBarProps {
+  onOpmetToggle: () => void;
+  opmetActive: boolean;
+}
+
+export default function HeaderBar({ onOpmetToggle, opmetActive }: HeaderBarProps) {
   const [workspaces, setWorkspaces] = useState<Workspace[]>([
     { id: 'ws-1', name: 'Analysis' },
   ]);
@@ -42,7 +47,13 @@ export default function HeaderBar() {
       </nav>
 
       <div className="header-right">
-        <div className="header-clock" id="header-clock" />
+        <button
+          className={`header-action-btn ${opmetActive ? 'active' : ''}`}
+          onClick={onOpmetToggle}
+          title="Toggle OPMET text reports"
+        >
+          OPMET
+        </button>
         <div className="alert-indicator" title="No active alerts">
           <span className="alert-dot idle" />
           ALT

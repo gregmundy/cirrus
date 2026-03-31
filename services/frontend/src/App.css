@@ -182,6 +182,31 @@ html, body, #root {
   gap: 12px;
 }
 
+.header-action-btn {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  padding: 3px 10px;
+  border: 1px solid var(--border-default);
+  border-radius: 3px;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.header-action-btn:hover {
+  background: var(--bg-raised);
+  color: var(--text-primary);
+}
+
+.header-action-btn.active {
+  background: rgba(96, 200, 240, 0.1);
+  color: var(--accent-cyan);
+  border-color: var(--accent-cyan);
+}
+
 .alert-indicator {
   display: flex;
   align-items: center;
@@ -593,6 +618,209 @@ html, body, #root {
 .goto-actions {
   display: flex;
   gap: 4px;
+}
+
+/* ─── OPMET TEXT PANEL ───────────────────────────────────── */
+
+.opmet-panel {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 45%;
+  background: var(--bg-base);
+  border-top: 2px solid var(--border-strong);
+  display: flex;
+  flex-direction: column;
+  z-index: 18;
+  animation: slideUp 0.2s ease-out;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.opmet-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--border-default);
+  flex-shrink: 0;
+}
+
+.opmet-title {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  color: var(--text-muted);
+}
+
+.opmet-counts {
+  display: flex;
+  gap: 10px;
+  flex: 1;
+}
+
+.opmet-count {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.opmet-close {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 18px;
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+}
+
+.opmet-close:hover { color: var(--text-primary); }
+
+.opmet-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+
+.opmet-filters {
+  display: flex;
+  gap: 2px;
+}
+
+.opmet-filter-btn {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  padding: 3px 10px;
+  border: 1px solid var(--border-default);
+  border-radius: 3px;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.1s;
+}
+
+.opmet-filter-btn:hover {
+  background: var(--bg-raised);
+}
+
+.opmet-filter-btn.active {
+  background: rgba(96, 200, 240, 0.1);
+  color: var(--accent-cyan);
+  border-color: var(--accent-cyan);
+}
+
+.opmet-search {
+  flex: 1;
+  max-width: 180px;
+  background: var(--bg-deep);
+  color: var(--text-primary);
+  border: 1px solid var(--border-default);
+  border-radius: 3px;
+  padding: 3px 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  outline: none;
+}
+
+.opmet-search:focus {
+  border-color: var(--accent-cyan);
+}
+
+.opmet-search::placeholder {
+  color: var(--text-muted);
+}
+
+.opmet-list {
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-default) transparent;
+}
+
+.opmet-loading,
+.opmet-empty {
+  padding: 20px;
+  text-align: center;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.opmet-row {
+  padding: 5px 12px;
+  border-bottom: 1px solid var(--border-subtle);
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.opmet-row:hover {
+  background: var(--bg-raised);
+}
+
+.opmet-row.selected {
+  background: rgba(96, 200, 240, 0.04);
+}
+
+.opmet-row-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.opmet-type-badge {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  min-width: 50px;
+}
+
+.opmet-station {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-primary);
+  min-width: 60px;
+}
+
+.opmet-hazard {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.opmet-time {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-left: auto;
+}
+
+.opmet-raw {
+  margin-top: 6px;
+  padding: 8px 10px;
+  background: var(--bg-deep);
+  border: 1px solid var(--border-subtle);
+  border-radius: 3px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 200px;
+  overflow-y: auto;
 }
 
 /* ─── TOOLBAR (hidden — replaced by panels) ─────────────── */

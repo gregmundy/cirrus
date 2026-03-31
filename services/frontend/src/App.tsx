@@ -3,6 +3,7 @@ import { useAppStore } from './stores/appStore';
 import HeaderBar from './components/HeaderBar';
 import DataPanel from './components/DataPanel';
 import LayerPanel from './components/LayerPanel';
+import OpmetPanel from './components/OpmetPanel';
 import StatusBar from './components/StatusBar';
 import MapView from './components/map/MapView';
 import './App.css';
@@ -11,6 +12,7 @@ export default function App() {
   const fetchMeta = useAppStore((s) => s.fetchMeta);
   const [dataCollapsed, setDataCollapsed] = useState(false);
   const [layerCollapsed, setLayerCollapsed] = useState(false);
+  const [opmetVisible, setOpmetVisible] = useState(false);
 
   useEffect(() => {
     fetchMeta();
@@ -18,7 +20,7 @@ export default function App() {
 
   return (
     <div className="app">
-      <HeaderBar />
+      <HeaderBar onOpmetToggle={() => setOpmetVisible(!opmetVisible)} opmetActive={opmetVisible} />
       <div className="workstation">
         <DataPanel
           collapsed={dataCollapsed}
@@ -28,6 +30,7 @@ export default function App() {
           <div className="map-container">
             <MapView />
           </div>
+          <OpmetPanel visible={opmetVisible} onClose={() => setOpmetVisible(false)} />
         </main>
         <LayerPanel
           collapsed={layerCollapsed}
