@@ -2,6 +2,7 @@ mod gridded;
 mod maxwind;
 mod meta;
 mod opmet;
+mod opmet_text;
 mod satellite;
 mod sigwx;
 mod wind;
@@ -45,6 +46,7 @@ async fn main() {
         .route("/api/gridded/meta", get(meta::get_meta))
         .route("/api/maxwind", get(maxwind::get_maxwind))
         .route("/api/opmet/stations", get(opmet::get_stations))
+        .route("/api/opmet/text", get(opmet_text::get_opmet_text))
         .route("/api/sigwx", get(sigwx::get_sigwx))
         .route("/api/satellite/{channel}", get(satellite::get_satellite))
         .with_state(pool);

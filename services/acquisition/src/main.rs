@@ -3,6 +3,7 @@ mod cycle;
 mod db;
 mod metar;
 mod nomads;
+mod opmet_text;
 
 use axum::{extract::State, routing::{get, post}, Json, Router};
 use chrono::{DateTime, Utc};
@@ -125,6 +126,26 @@ async fn metar_polling_loop(state: Arc<AppState>) {
     }
 }
 
+async fn opmet_text_polling_loop(state: Arc<AppState>) {
+    // Stagger startup to avoid hammering AWC at the same moment as METARs
+    tokio::time::sleep(Duration::from_secs(30)).await;
+
+    let mut ticker = interval(Duration::from_secs(300)); // every 5 minutes
+    loop {
+        ticker.tick().await;
+        tracing::info!("Fetching TAFs from AWC...");
+        match opmet_text::fetch_tafs(&state.client, &state.pool).await {
+            Ok(count) => tracing::info!("Ingested {count} new TAF(s)"),
+            Err(e) => tracing::error!("TAF fetch failed: {e}"),
+        }
+        tracing::info!("Fetching international SIGMETs from AWC...");
+        match opmet_text::fetch_sigmets(&state.client, &state.pool).await {
+            Ok(count) => tracing::info!("Ingested {count} new SIGMET(s)"),
+            Err(e) => tracing::error!("SIGMET fetch failed: {e}"),
+        }
+    }
+}
+
 async fn polling_loop(state: Arc<AppState>) {
     let mut ticker = interval(Duration::from_secs(state.config.poll_interval_secs));
     loop {
@@ -175,6 +196,11 @@ async fn main() {
     let metar_state = state.clone();
     tokio::spawn(async move {
         metar_polling_loop(metar_state).await;
+    });
+
+    let opmet_text_state = state.clone();
+    tokio::spawn(async move {
+        opmet_text_polling_loop(opmet_text_state).await;
     });
 
     let app = Router::new()
