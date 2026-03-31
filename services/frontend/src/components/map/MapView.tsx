@@ -18,6 +18,7 @@ import { getStationModelAtlas } from '../../utils/stationModelAtlas';
 import type { StationModelMapping } from '../../utils/stationModelAtlas';
 import StationPopup from '../StationPopup';
 import MapLegend from '../MapLegend';
+import GoToLocation from '../GoToLocation';
 import type { StationObs } from '../../stores/appStore';
 
 export default function MapView() {
@@ -352,6 +353,12 @@ export default function MapView() {
         />
       )}
       <MapLegend />
+      <div style={{ position: 'absolute', top: 8, right: 48, zIndex: 15 }}>
+        <GoToLocation
+          onGoTo={(lat, lon) => mapRef.current?.flyTo({ center: [lon, lat], zoom: 4, duration: 1500 })}
+          onFitBounds={(s, w, n, e) => mapRef.current?.fitBounds([[w, s], [e, n]], { padding: 20, duration: 1500 })}
+        />
+      </div>
     </>
   );
 }
