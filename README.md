@@ -1,8 +1,18 @@
 # Cirrus
 
-A next-generation **comprehensive weather workstation** for aviation and operational meteorology. Cirrus ingests gridded numerical-weather-prediction output, satellite imagery, station observations, and forecast advisories, decodes them locally, and renders the result as an interactive WebGL workstation — running fully offline post-ingest.
+A comprehensive web-first meteorological workstation. Ingests gridded numerical-weather-prediction output, satellite imagery, station observations, and forecast advisories, decodes them locally, and renders the result as an interactive WebGL workstation — running fully offline post-ingest.
 
-The product competes with native C-based incumbents that have been in the field for 20+ years; performance, rendering fidelity, and a modern UX are intentional differentiators.
+## Why build a meteorological workstation
+
+I spent a significant portion of my career working in weather, first as a
+consultant for NOAA and NASA initiatives, then supporting the commercial
+weather products division of one of my earlier employers. I developed a
+passion for weather, especially aviation meteorology, and needed an outlet
+for the knowledge I earned over many years.
+
+Cirrus is the means by which I scratch this itch. It allows me to maintain my footing
+
+![Cirrus App](screenshots/satellite_2.png)
 
 ## Architecture
 
