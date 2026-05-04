@@ -13,10 +13,16 @@ for the knowledge I earned over many years.
 Cirrus is the means by which I scratch this itch. It allows me to maintain my footing
 
 ![Cirrus App](screenshots/wind_barbs.png)
-some text goes here
+
+> Wind barbs at FL300 with hover detail. Meteorologically correct rotation, speed, direction, and position rendered on demand.
+
 ![Satellite Imagery](screenshots/combined_dark_mode.png)
-some more text goes here
+
+> Visible satellite (left) and upper-level water vapor (right), each overlaid with GFS-derived gridded fields and wind barbs at flight level. The water vapor channel is the one most aviation forecasters actually care about.
+
 ![RelHum](screenshots/temp_height_rel_hum.png)
+
+> Temperature, geopotential height, relative humidity contours and wind barbs over a clean basemap. Computed in a Web Worker, rendered with d3-contour and Gaussian smoothing.
 
 ## Architecture
 
