@@ -12,7 +12,11 @@ for the knowledge I earned over many years.
 
 Cirrus is the means by which I scratch this itch. It allows me to maintain my footing
 
-![Cirrus App](screenshots/satellite_2.png)
+![Cirrus App](screenshots/wind_barbs.png)
+some text goes here
+![Satellite Imagery](screenshots/combined_dark_mode.png)
+some more text goes here
+![RelHum](screenshots/temp_height_rel_hum.png)
 
 ## Architecture
 
