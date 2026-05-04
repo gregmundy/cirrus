@@ -93,6 +93,20 @@ def main():
     health_thread.start()
     logger.info("%s health server on port %d", SERVICE_NAME, PORT)
 
+    satellite_dir = os.environ.get("SATELLITE_DATA_DIR", "/data/satellite")
+    satellite_interval = int(os.environ.get("SATELLITE_POLL_INTERVAL_SECS", "600"))
+    from cirrus.decoder.satellite import poll_loop as satellite_poll_loop
+    satellite_thread = Thread(
+        target=satellite_poll_loop,
+        kwargs={"output_dir": satellite_dir, "interval": satellite_interval},
+        daemon=True,
+    )
+    satellite_thread.start()
+    logger.info(
+        "%s GOES satellite poll loop started (dir=%s, interval=%ds)",
+        SERVICE_NAME, satellite_dir, satellite_interval,
+    )
+
     listen_conn.execute("LISTEN decoder_jobs")
     logger.info("%s listening for notifications on decoder_jobs", SERVICE_NAME)
 

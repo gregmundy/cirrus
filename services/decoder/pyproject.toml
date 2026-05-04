@@ -16,6 +16,9 @@ decode = [
     "lxml>=5.0",
     "shapely>=2.0",
     "numpy>=2.0",
+    "boto3>=1.34",
+    "netCDF4>=1.6",
+    "scipy>=1.11",
 ]
 test = [
     "pytest>=7.0",

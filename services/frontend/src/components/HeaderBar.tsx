@@ -28,7 +28,6 @@ export default function HeaderBar({ onOpmetToggle, opmetActive }: HeaderBarProps
       <div className="header-brand">
         <span className="brand-icon">◈</span>
         <span className="brand-name">CIRRUS</span>
-        <span className="brand-sub">WAFS</span>
       </div>
 
       <nav className="workspace-tabs">

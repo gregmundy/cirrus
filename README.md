@@ -96,9 +96,15 @@ docker compose exec decoder python -m cirrus.decoder.sigwx_load /tmp/file.xml
 
 Until you load at least one file, `GET /api/sigwx` returns 404 and the frontend SIGWX layer stays empty.
 
-### GOES satellite imagery (currently inert)
+### GOES satellite imagery
 
-The decoder's `satellite.py` module, the backend's `/api/satellite/{channel}` endpoint, and the frontend's `SatelliteLayer` are all wired, but **no runtime currently invokes the GOES poll loop and the compose stack does not mount `/data/satellite`** — so `/api/satellite/{channel}` will return 404. To hook this up you need to: add a `satellite_store` named volume in `docker-compose.yml`, mount it on both the decoder and backend, and either start `cirrus.decoder.satellite.poll_loop()` from the decoder's `main.py` or run a one-shot `acquire_all()` on demand. See "Roadmap" below.
+GOES-19 imagery is pulled automatically from the public NOAA S3 bucket `noaa-goes19` (anonymous access — no AWS credentials needed). The decoder spawns a polling thread on startup that downloads the latest CONUS sector ABI L2 Cloud and Moisture Imagery for three channels (visible, upper water-vapor, clean IR), reprojects each to equirectangular lat/lon at 1800×1000, and writes JSON files to `/data/satellite/ch{NN}.json` on the `satellite_store` volume. The backend reads those files at request time and serves them via `GET /api/satellite/{channel}`.
+
+Tunable via env vars:
+- `SATELLITE_POLL_INTERVAL_SECS` (default `600`) — how often to refresh.
+- `SATELLITE_DATA_DIR` (default `/data/satellite`) — where to write JSONs.
+
+The first poll takes ~45 s (download + reproject all three channels) — `/api/satellite/{channel}` returns 404 until it completes.
 
 ### Iterating on code
 
@@ -137,7 +143,7 @@ Per-service development commands (`cargo build`, `npm run dev`, `pytest`, etc.) 
 | **AWC METAR** cache CSV | auto-poll | Station observations with flight category | `aerodromes`, `opmet_reports` |
 | **AWC TAF + SIGMET** | auto-poll | OPMET text products | `opmet_text_reports` |
 | **WAFS SIGWX** IWXXM XML and BUFR | manual via CLI loader | 9 phenomenon types (CB, turbulence, jets, icing, volcanic ash, etc.) | `sigwx_features` |
-| **NOAA GOES-19** (East) | code present, runtime not yet wired | Reprojected satellite imagery (visible + IR) | flat-file store on disk |
+| **NOAA GOES-19** (East) — public S3 bucket `noaa-goes19` | auto-poll (default 600 s) | Visible (Ch2), Upper WV (Ch8), Clean IR (Ch13) reprojected to equirectangular | flat-file JSON store on `satellite_store` volume |
 
 ### Backend API (`services/backend`)
 
@@ -189,7 +195,6 @@ A pre-LaCie security audit (May 2026) flagged two patterns that are safe **today
 - `.gitignore` covers bare `.env` only; should widen to `.env*` plus key/cert globs.
 
 ### Functional gaps
-- **GOES satellite is not yet operational** — the decoder module, backend endpoint, and frontend layer all exist, but no runtime invokes `acquire_all()` and there is no `/data/satellite` volume in compose. See "Getting started → GOES satellite imagery".
 - **SIGWX is not auto-ingested** — features land in the DB only when an operator runs the CLI loader against a WAFS XML or BUFR file.
 - **No WebSocket push channel yet** — `alerting` is a scaffold; advisory delivery is still poll-based via REST.
 - **No PDF briefing output** — `briefing` is a scaffold; Playwright integration is future work.
@@ -211,13 +216,12 @@ The completed slices:
 7. ✅ Station observations (METAR) with WMO station model
 8. ✅ OPMET text products (TAF + SIGMET)
 9. ✅ SIGWX rendering — IWXXM XML and BUFR, ICAO-standard symbology, scalloped CB, splines
-10. 🟡 GOES-19 satellite imagery — decoder module, backend endpoint, and frontend layer exist; runtime polling and the `/data/satellite` volume are not yet wired
+10. ✅ GOES-19 satellite imagery (visible, upper WV, clean IR) — auto-poll from public NOAA S3 bucket
 11. ✅ Workstation UI (header + layer panel + data panel + map legend)
 12. ✅ Tauri desktop wrapper
 
 Next up:
 
-- **Finish GOES wiring** — add a `satellite_store` volume to `docker-compose.yml`, mount it on decoder + backend, and start `cirrus.decoder.satellite.poll_loop()` from `decoder/main.py` (or expose it as a separate compose service).
 - **Auto-ingest for SIGWX** — wrap the existing CLI loader behind an acquisition polling loop or NOTIFY-driven trigger so SIGWX populates without manual operator action.
 - **Alerting WebSocket channel** — push advisory products to the frontend in near-real-time (currently the `alerting` service is a scaffold).
 - **PDF briefing output** — wire up Playwright to render briefing packets from the same data the UI sees.
