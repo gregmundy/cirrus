@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 import type { ComputedContours, GriddedData } from '../components/map/ContourLayer';
+import type { SigwxGeoJSON } from '../components/map/SigwxLayer';
+import type { SatelliteData } from '../components/map/SatelliteLayer';
 import { computeContoursAsync } from '../utils/contourWorkerClient';
 
 export type { GriddedData } from '../components/map/ContourLayer';
@@ -124,7 +126,7 @@ interface AppState {
   sigwxVisible: boolean;
   sigwxLoading: boolean;
   sigwxError: string | null;
-  sigwxFeatures: any[];
+  sigwxFeatures: SigwxGeoJSON[];
   toggleSigwx: () => void;
   fetchSigwxData: () => Promise<void>;
 
@@ -133,7 +135,7 @@ interface AppState {
   satelliteChannel: number;
   satelliteLoading: boolean;
   satelliteError: string | null;
-  satelliteData: any | null;
+  satelliteData: SatelliteData | null;
   toggleSatellite: () => void;
   setSatelliteChannel: (ch: number) => void;
   fetchSatelliteData: () => Promise<void>;

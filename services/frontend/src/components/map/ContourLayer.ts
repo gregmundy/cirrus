@@ -182,6 +182,7 @@ export function createTropopauseLayers(contours: ComputedContours): Layer[] {
   if (lines.length === 0) return [];
 
   return [
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- PathStyleExtension dash props not in PathLayer typings
     new (PathLayer as any)({
       id: 'tropopause-contours',
       data: lines,

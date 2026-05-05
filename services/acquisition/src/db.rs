@@ -7,7 +7,7 @@ pub async fn downloaded_forecast_hours(
     run_time: DateTime<Utc>,
 ) -> Result<Vec<i32>, sqlx::Error> {
     let rows = sqlx::query_scalar::<_, i32>(
-        "SELECT forecast_hour FROM grib_downloads WHERE run_time = $1"
+        "SELECT forecast_hour FROM grib_downloads WHERE run_time = $1",
     )
     .bind(run_time)
     .fetch_all(pool)
@@ -40,7 +40,7 @@ pub async fn record_download(
                file_size = EXCLUDED.file_size,
                downloaded_at = NOW(),
                decoded = FALSE
-         RETURNING id"
+         RETURNING id",
     )
     .bind(run_time)
     .bind(forecast_hour as i32)
@@ -53,7 +53,8 @@ pub async fn record_download(
     let payload = serde_json::json!({
         "download_id": id,
         "file_path": file_path
-    }).to_string();
+    })
+    .to_string();
 
     sqlx::query("SELECT pg_notify('decoder_jobs', $1)")
         .bind(&payload)
@@ -74,12 +75,11 @@ pub async fn cleanup_old_downloads(
 ) -> Result<Vec<String>, sqlx::Error> {
     let cutoff = Utc::now() - Duration::hours(retention_hours);
 
-    let paths: Vec<String> = sqlx::query_scalar(
-        "DELETE FROM grib_downloads WHERE run_time < $1 RETURNING file_path"
-    )
-    .bind(cutoff)
-    .fetch_all(pool)
-    .await?;
+    let paths: Vec<String> =
+        sqlx::query_scalar("DELETE FROM grib_downloads WHERE run_time < $1 RETURNING file_path")
+            .bind(cutoff)
+            .fetch_all(pool)
+            .await?;
 
     Ok(paths)
 }

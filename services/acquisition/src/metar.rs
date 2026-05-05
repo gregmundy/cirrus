@@ -79,13 +79,18 @@ fn parse_csv_record(record: &csv::StringRecord) -> Option<MetarRow> {
     let visibility_sm = record.get(10).and_then(|s| s.trim().parse().ok());
     let altimeter = record.get(11).and_then(|s| s.trim().parse().ok());
     let slp_hpa: Option<f32> = record.get(12).and_then(|s| s.trim().parse().ok());
-    let wx_string = record.get(21).map(|s| s.trim().to_string()).filter(|s| !s.is_empty());
+    let wx_string = record
+        .get(21)
+        .map(|s| s.trim().to_string())
+        .filter(|s| !s.is_empty());
 
     let mut ceiling_ft: Option<i32> = None;
     let mut lowest_cover: Option<String> = None;
     for layer_idx in (22..=28).step_by(2) {
         let cover = record.get(layer_idx).map(|s| s.trim()).unwrap_or("");
-        let base = record.get(layer_idx + 1).and_then(|s| s.trim().parse::<i32>().ok());
+        let base = record
+            .get(layer_idx + 1)
+            .and_then(|s| s.trim().parse::<i32>().ok());
         if (cover == "BKN" || cover == "OVC" || cover == "VV") && base.is_some() {
             if ceiling_ft.is_none() || base.unwrap() < ceiling_ft.unwrap() {
                 ceiling_ft = base;
@@ -97,13 +102,29 @@ fn parse_csv_record(record: &csv::StringRecord) -> Option<MetarRow> {
         }
     }
 
-    let flight_category = record.get(30).map(|s| s.trim().to_string()).filter(|s| !s.is_empty());
+    let flight_category = record
+        .get(30)
+        .map(|s| s.trim().to_string())
+        .filter(|s| !s.is_empty());
 
     Some(MetarRow {
-        station, observation_time, raw_text, latitude, longitude,
-        flight_category, wind_dir, wind_speed, wind_gust,
-        visibility_sm, wx_string, sky_cover: lowest_cover, ceiling_ft,
-        temp_c, dewpoint_c, altimeter, slp_hpa,
+        station,
+        observation_time,
+        raw_text,
+        latitude,
+        longitude,
+        flight_category,
+        wind_dir,
+        wind_speed,
+        wind_gust,
+        visibility_sm,
+        wx_string,
+        sky_cover: lowest_cover,
+        ceiling_ft,
+        temp_c,
+        dewpoint_c,
+        altimeter,
+        slp_hpa,
     })
 }
 

@@ -1,8 +1,4 @@
-use axum::{
-    extract::Path,
-    http::StatusCode,
-    Json,
-};
+use axum::{extract::Path, http::StatusCode, Json};
 use serde::Serialize;
 use std::path;
 
@@ -43,7 +39,8 @@ struct SatelliteFile {
 pub async fn get_satellite(
     Path(channel): Path<u32>,
 ) -> Result<Json<SatelliteResponse>, StatusCode> {
-    let data_dir = std::env::var("SATELLITE_DATA_DIR").unwrap_or_else(|_| "/data/satellite".to_string());
+    let data_dir =
+        std::env::var("SATELLITE_DATA_DIR").unwrap_or_else(|_| "/data/satellite".to_string());
     let file_path = path::Path::new(&data_dir).join(format!("ch{:02}.json", channel));
 
     if !file_path.exists() {
@@ -54,12 +51,11 @@ pub async fn get_satellite(
         .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
-    let file: SatelliteFile = serde_json::from_str(&content)
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    let file: SatelliteFile =
+        serde_json::from_str(&content).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
     // Decode hex-encoded f32 bytes
-    let bytes = hex::decode(&file.values)
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    let bytes = hex::decode(&file.values).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
     let values: Vec<f32> = bytes
         .chunks_exact(4)

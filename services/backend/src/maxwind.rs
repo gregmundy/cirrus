@@ -56,33 +56,40 @@ pub async fn get_maxwind(
     // Resolve run_time
     let run_time = match params.run_time {
         Some(rt) => rt,
-        None => {
-            sqlx::query_scalar::<_, DateTime<Utc>>(
-                "SELECT DISTINCT run_time FROM gridded_fields ORDER BY run_time DESC LIMIT 1"
-            )
-            .fetch_optional(&pool)
-            .await
-            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
-            .ok_or(StatusCode::NOT_FOUND)?
-        }
+        None => sqlx::query_scalar::<_, DateTime<Utc>>(
+            "SELECT DISTINCT run_time FROM gridded_fields ORDER BY run_time DESC LIMIT 1",
+        )
+        .fetch_optional(&pool)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
+        .ok_or(StatusCode::NOT_FOUND)?,
     };
 
     // Fetch UGRD, VGRD, PRES at maxwind level
     let u_row = sqlx::query_as::<_, GriddedRow>(MAXWIND_QUERY)
-        .bind("UGRD").bind(params.forecast_hour).bind(run_time)
-        .fetch_optional(&pool).await
+        .bind("UGRD")
+        .bind(params.forecast_hour)
+        .bind(run_time)
+        .fetch_optional(&pool)
+        .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
         .ok_or(StatusCode::NOT_FOUND)?;
 
     let v_row = sqlx::query_as::<_, GriddedRow>(MAXWIND_QUERY)
-        .bind("VGRD").bind(params.forecast_hour).bind(run_time)
-        .fetch_optional(&pool).await
+        .bind("VGRD")
+        .bind(params.forecast_hour)
+        .bind(run_time)
+        .fetch_optional(&pool)
+        .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
         .ok_or(StatusCode::NOT_FOUND)?;
 
     let p_row = sqlx::query_as::<_, GriddedRow>(MAXWIND_QUERY)
-        .bind("PRES").bind(params.forecast_hour).bind(run_time)
-        .fetch_optional(&pool).await
+        .bind("PRES")
+        .bind(params.forecast_hour)
+        .bind(run_time)
+        .fetch_optional(&pool)
+        .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
         .ok_or(StatusCode::NOT_FOUND)?;
 

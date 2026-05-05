@@ -5,12 +5,17 @@ import { interpolateSpline, generateScallopedRing } from '../../utils/splineInte
 import { getWindBarbKey } from '../../utils/windBarbs';
 import type { SigwxSymbolAtlas } from '../../utils/sigwxSymbols';
 
-interface SigwxGeoJSON {
+export interface SigwxGeoJSON {
   type: 'Feature';
   geometry: {
     type: 'Point' | 'LineString' | 'Polygon';
+    // GeoJSON coordinates are polymorphic by geometry.type; consumers narrow at use site.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     coordinates: any;
   };
+  // SIGWX feature properties vary by phenomenon (cloud, jet, turbulence, icing, …).
+  // A discriminated union per phenomenon would be cleaner but is out of scope for a lint pass.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   properties: Record<string, any>;
 }
 
@@ -71,6 +76,7 @@ function sigwxScale(zoom: number): number {
 }
 
 /** Format FL range as ICAO call-out: "XXX/320" or "340/400". */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- see SigwxGeoJSON.properties note
 function flRange(props: Record<string, any>): string {
   const lower = props.lower_fl != null ? `${props.lower_fl}` : 'XXX';
   const upper = props.upper_fl != null ? `${props.upper_fl}` : 'XXX';
@@ -193,6 +199,7 @@ export function createSigwxLayers(
     }));
 
     // Dashed outline
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- PathStyleExtension dash props not in PathLayer typings
     layers.push(new (PathLayer as any)({
       id: 'sigwx-outline-turb',
       data: turbItems,
@@ -339,6 +346,7 @@ export function createSigwxLayers(
     const lineColor = OUTLINE_COLORS.TROPOPAUSE;
     const textColor = LABEL_COLORS.TROPOPAUSE;
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- PathStyleExtension dash props not in PathLayer typings
     layers.push(new (PathLayer as any)({
       id: 'sigwx-outline-trop',
       data: tropItems,

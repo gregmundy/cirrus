@@ -33,15 +33,13 @@ pub async fn get_sigwx(
 ) -> Result<Json<SigwxResponse>, StatusCode> {
     let valid_time = match params.valid_time {
         Some(vt) => vt,
-        None => {
-            sqlx::query_scalar::<_, DateTime<Utc>>(
-                "SELECT DISTINCT valid_time FROM sigwx_features ORDER BY valid_time DESC LIMIT 1",
-            )
-            .fetch_optional(&pool)
-            .await
-            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
-            .ok_or(StatusCode::NOT_FOUND)?
-        }
+        None => sqlx::query_scalar::<_, DateTime<Utc>>(
+            "SELECT DISTINCT valid_time FROM sigwx_features ORDER BY valid_time DESC LIMIT 1",
+        )
+        .fetch_optional(&pool)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
+        .ok_or(StatusCode::NOT_FOUND)?,
     };
 
     let rows = sqlx::query_as::<_, SigwxRow>(

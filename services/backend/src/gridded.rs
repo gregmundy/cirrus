@@ -54,15 +54,13 @@ pub async fn get_gridded(
     // Resolve run_time
     let run_time = match params.run_time {
         Some(rt) => rt,
-        None => {
-            sqlx::query_scalar::<_, DateTime<Utc>>(
-                "SELECT run_time FROM gridded_fields ORDER BY run_time DESC LIMIT 1"
-            )
-            .fetch_optional(&pool)
-            .await
-            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
-            .ok_or(StatusCode::NOT_FOUND)?
-        }
+        None => sqlx::query_scalar::<_, DateTime<Utc>>(
+            "SELECT run_time FROM gridded_fields ORDER BY run_time DESC LIMIT 1",
+        )
+        .fetch_optional(&pool)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
+        .ok_or(StatusCode::NOT_FOUND)?,
     };
 
     // Fetch the gridded field
@@ -99,7 +97,8 @@ pub async fn get_gridded(
     let raw_nj = row.nj as usize;
 
     // Decode BYTEA to f32 array
-    let all_values: Vec<f32> = row.values
+    let all_values: Vec<f32> = row
+        .values
         .chunks_exact(4)
         .map(|c| f32::from_le_bytes([c[0], c[1], c[2], c[3]]))
         .collect();
@@ -139,7 +138,10 @@ pub async fn get_gridded(
     }
 
     // Find the split point: first index where lon > 180
-    let split = raw_lons.iter().position(|&lon| lon > 180.0).unwrap_or(raw_lons.len());
+    let split = raw_lons
+        .iter()
+        .position(|&lon| lon > 180.0)
+        .unwrap_or(raw_lons.len());
 
     // Reorder: [split..end] (wrapped to negative) then [0..split]
     let mut i_indices = Vec::new();

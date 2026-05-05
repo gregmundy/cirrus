@@ -1,7 +1,7 @@
 use chrono::{DateTime, Utc};
 use serde::Deserialize;
-use sqlx::PgPool;
 use serde_json;
+use sqlx::PgPool;
 
 // AWC TAF JSON response shape
 #[derive(Deserialize)]
@@ -53,7 +53,9 @@ fn parse_unix_ts(v: &serde_json::Value) -> Option<DateTime<Utc>> {
                 .map(|dt| dt.with_timezone(&Utc))
                 .ok()
                 .or_else(|| {
-                    s.parse::<i64>().ok().and_then(|secs| DateTime::from_timestamp(secs, 0))
+                    s.parse::<i64>()
+                        .ok()
+                        .and_then(|secs| DateTime::from_timestamp(secs, 0))
                 })
         }
         _ => None,
@@ -72,8 +74,8 @@ pub async fn fetch_tafs(client: &reqwest::Client, pool: &PgPool) -> Result<usize
         .await
         .map_err(|e| format!("TAF body read failed: {e}"))?;
 
-    let entries: Vec<TafEntry> = serde_json::from_str(&body)
-        .map_err(|e| format!("TAF JSON parse failed: {e}"))?;
+    let entries: Vec<TafEntry> =
+        serde_json::from_str(&body).map_err(|e| format!("TAF JSON parse failed: {e}"))?;
 
     if entries.is_empty() {
         return Ok(0);
@@ -128,8 +130,8 @@ pub async fn fetch_sigmets(client: &reqwest::Client, pool: &PgPool) -> Result<us
         .await
         .map_err(|e| format!("SIGMET body read failed: {e}"))?;
 
-    let entries: Vec<IsigmetEntry> = serde_json::from_str(&body)
-        .map_err(|e| format!("SIGMET JSON parse failed: {e}"))?;
+    let entries: Vec<IsigmetEntry> =
+        serde_json::from_str(&body).map_err(|e| format!("SIGMET JSON parse failed: {e}"))?;
 
     if entries.is_empty() {
         return Ok(0);
@@ -171,6 +173,8 @@ pub async fn fetch_sigmets(client: &reqwest::Client, pool: &PgPool) -> Result<us
         count += result.rows_affected() as usize;
     }
 
-    tx.commit().await.map_err(|e| format!("Commit SIGMETs: {e}"))?;
+    tx.commit()
+        .await
+        .map_err(|e| format!("Commit SIGMETs: {e}"))?;
     Ok(count)
 }

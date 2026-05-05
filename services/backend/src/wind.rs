@@ -51,15 +51,13 @@ pub async fn get_wind(
     // Resolve run_time
     let run_time = match params.run_time {
         Some(rt) => rt,
-        None => {
-            sqlx::query_scalar::<_, DateTime<Utc>>(
-                "SELECT DISTINCT run_time FROM gridded_fields ORDER BY run_time DESC LIMIT 1"
-            )
-            .fetch_optional(&pool)
-            .await
-            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
-            .ok_or(StatusCode::NOT_FOUND)?
-        }
+        None => sqlx::query_scalar::<_, DateTime<Utc>>(
+            "SELECT DISTINCT run_time FROM gridded_fields ORDER BY run_time DESC LIMIT 1",
+        )
+        .fetch_optional(&pool)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
+        .ok_or(StatusCode::NOT_FOUND)?,
     };
 
     // Fetch UGRD

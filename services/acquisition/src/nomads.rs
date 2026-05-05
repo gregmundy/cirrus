@@ -5,15 +5,27 @@ use tracing;
 
 /// NOMADS filter parameters for WAFS-relevant GFS variables
 const PARAMS: &[&str] = &[
-    "var_UGRD=on", "var_VGRD=on", "var_TMP=on",
-    "var_HGT=on", "var_RH=on", "var_PRES=on",
+    "var_UGRD=on",
+    "var_VGRD=on",
+    "var_TMP=on",
+    "var_HGT=on",
+    "var_RH=on",
+    "var_PRES=on",
 ];
 
 /// GFS pressure levels approximating WAFS flight levels (see spec Section 2.4)
 const LEVELS: &[&str] = &[
-    "lev_70_mb=on", "lev_100_mb=on", "lev_150_mb=on", "lev_200_mb=on",
-    "lev_250_mb=on", "lev_300_mb=on", "lev_400_mb=on", "lev_500_mb=on",
-    "lev_600_mb=on", "lev_700_mb=on", "lev_850_mb=on",
+    "lev_70_mb=on",
+    "lev_100_mb=on",
+    "lev_150_mb=on",
+    "lev_200_mb=on",
+    "lev_250_mb=on",
+    "lev_300_mb=on",
+    "lev_400_mb=on",
+    "lev_500_mb=on",
+    "lev_600_mb=on",
+    "lev_700_mb=on",
+    "lev_850_mb=on",
     "lev_tropopause=on",
     "lev_max_wind=on",
 ];
@@ -47,14 +59,11 @@ pub fn file_path(store_path: &str, run_time: DateTime<Utc>, forecast_hour: u32) 
 /// Download a single GRIB2 file from NOMADS with retries.
 ///
 /// Returns the file size in bytes on success.
-pub async fn download(
-    client: &reqwest::Client,
-    url: &str,
-    dest: &Path,
-) -> Result<u64, String> {
+pub async fn download(client: &reqwest::Client, url: &str, dest: &Path) -> Result<u64, String> {
     // Ensure parent directory exists
     if let Some(parent) = dest.parent() {
-        fs::create_dir_all(parent).await
+        fs::create_dir_all(parent)
+            .await
             .map_err(|e| format!("Failed to create directory {}: {}", parent.display(), e))?;
     }
 
@@ -81,7 +90,8 @@ pub async fn download(
                             tracing::warn!("{last_err}");
                             continue;
                         }
-                        fs::write(dest, &bytes).await
+                        fs::write(dest, &bytes)
+                            .await
                             .map_err(|e| format!("Failed to write {}: {}", dest.display(), e))?;
                         return Ok(bytes.len() as u64);
                     }

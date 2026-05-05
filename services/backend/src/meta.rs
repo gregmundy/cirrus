@@ -29,7 +29,7 @@ pub async fn get_meta(State(pool): State<PgPool>) -> Json<MetaResponse> {
     let rows = sqlx::query_as::<_, FieldMeta>(
         "SELECT DISTINCT run_time, forecast_hour, parameter, level_hpa \
          FROM gridded_fields \
-         ORDER BY run_time DESC, forecast_hour, parameter, level_hpa"
+         ORDER BY run_time DESC, forecast_hour, parameter, level_hpa",
     )
     .fetch_all(&pool)
     .await

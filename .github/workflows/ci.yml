@@ -1,0 +1,98 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Cancel in-progress runs when a new commit is pushed to the same ref.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  rust:
+    name: rust (fmt + clippy + test)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: services
+
+      - name: cargo fmt --check
+        run: cargo fmt --all -- --check
+
+      - name: cargo clippy
+        # No -D warnings yet — surface lints without gating until cleaned up.
+        run: cargo clippy --workspace --all-targets
+
+      - name: cargo test
+        run: cargo test --workspace --quiet
+
+  python:
+    name: python (decoder pytest)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: services/decoder/pyproject.toml
+
+      - name: install system deps (ecCodes)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libeccodes-dev
+
+      - name: install decoder package
+        run: pip install -e "./services/decoder[decode,test]"
+
+      - name: pytest
+        working-directory: services/decoder
+        run: python -m pytest --quiet
+
+  frontend:
+    name: frontend (build + lint)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: services/frontend/package-lock.json
+
+      - name: npm ci
+        run: npm ci
+
+      - name: build (tsc typecheck + vite bundle)
+        # Gates on type errors via `tsc -b` inside `npm run build`.
+        run: npm run build
+
+      - name: eslint
+        run: npm run lint
+
+  compose:
+    name: docker-compose syntax
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: validate docker-compose.yml
+        run: docker compose --env-file .env.example config --quiet

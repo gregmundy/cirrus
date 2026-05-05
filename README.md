@@ -195,6 +195,34 @@ cirrus/
 
 For prerequisites, initial setup, verification, troubleshooting, and per-service development commands, see [RUNNING.md](RUNNING.md).
 
+## Continuous integration
+
+GitHub Actions workflow at `.github/workflows/ci.yml` runs on every push and PR to `main`:
+
+| Job | Gates on |
+|---|---|
+| `rust` | `cargo fmt --check`, `cargo clippy` (informational), `cargo test --workspace` |
+| `python` | `pytest` for the decoder package (with `libeccodes-dev` installed) |
+| `frontend` | `npm run build` (TypeScript typecheck via `tsc -b` + Vite bundle), `npm run lint` (eslint) |
+| `compose` | `docker compose config --quiet` to validate `docker-compose.yml` syntax |
+
+All four jobs run in parallel. To run the same checks locally:
+
+```bash
+# Rust
+cd services && cargo fmt --check && cargo clippy --workspace && cargo test --workspace
+
+# Python (decoder)
+pip install -e "./services/decoder[decode,test]"
+cd services/decoder && pytest
+
+# Frontend
+cd services/frontend && npm ci && npm run build && npm run lint
+
+# Compose
+docker compose --env-file .env.example config --quiet
+```
+
 ## Contributing
 
 See [CLAUDE.md](CLAUDE.md) for conventions, build/test commands, and the canonical service-name vocabulary. Spec docs in `docs/` are authoritative for product requirements.

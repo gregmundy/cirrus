@@ -24,9 +24,7 @@ pub struct StationObs {
     longitude: f64,
 }
 
-pub async fn get_stations(
-    State(pool): State<PgPool>,
-) -> Result<Json<Vec<StationObs>>, StatusCode> {
+pub async fn get_stations(State(pool): State<PgPool>) -> Result<Json<Vec<StationObs>>, StatusCode> {
     let rows = sqlx::query_as::<_, StationObs>(
         "SELECT DISTINCT ON (station)
             station, observation_time, raw_text, flight_category,
@@ -36,7 +34,7 @@ pub async fn get_stations(
         FROM opmet_reports
         WHERE report_type = 'METAR'
           AND observation_time > NOW() - INTERVAL '3 hours'
-        ORDER BY station, observation_time DESC"
+        ORDER BY station, observation_time DESC",
     )
     .fetch_all(&pool)
     .await

@@ -5,7 +5,11 @@ mod metar;
 mod nomads;
 mod opmet_text;
 
-use axum::{extract::State, routing::{get, post}, Json, Router};
+use axum::{
+    extract::State,
+    routing::{get, post},
+    Json, Router,
+};
 use chrono::{DateTime, Utc};
 use serde_json::{json, Value};
 use sqlx::postgres::PgPoolOptions;
@@ -39,7 +43,9 @@ async fn fetch_now(
         Some(rt) => rt,
         None => match cycle::latest_available_cycle(Utc::now()) {
             Some(rt) => rt,
-            None => return Json(json!({"status": "error", "message": "No GFS cycle available yet"})),
+            None => {
+                return Json(json!({"status": "error", "message": "No GFS cycle available yet"}))
+            }
         },
     };
 
@@ -76,9 +82,9 @@ async fn download_cycle(state: &AppState, run_time: DateTime<Utc>) -> Result<(),
         match nomads::download(&state.client, &url, &dest).await {
             Ok(file_size) => {
                 let dest_str = dest.to_string_lossy().to_string();
-                match db::record_download(
-                    &state.pool, run_time, fhour, &url, &dest_str, file_size,
-                ).await {
+                match db::record_download(&state.pool, run_time, fhour, &url, &dest_str, file_size)
+                    .await
+                {
                     Ok(id) => {
                         tracing::info!(
                             "Downloaded {run_time} f{fhour:03} ({file_size} bytes, id={id})"
@@ -119,7 +125,9 @@ async fn metar_polling_loop(state: Arc<AppState>) {
     loop {
         ticker.tick().await;
         tracing::info!("Fetching METAR cache from AWC...");
-        match metar::fetch_and_store(&state.client, &state.pool, &state.config.metar_cache_url).await {
+        match metar::fetch_and_store(&state.client, &state.pool, &state.config.metar_cache_url)
+            .await
+        {
             Ok(count) => tracing::info!("Ingested {count} new METAR(s)"),
             Err(e) => tracing::error!("METAR fetch failed: {e}"),
         }
@@ -165,8 +173,7 @@ async fn polling_loop(state: Arc<AppState>) {
 async fn main() {
     tracing_subscriber::fmt()
         .with_env_filter(
-            tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "info".into()),
+            tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| "info".into()),
         )
         .init();
 
@@ -186,7 +193,11 @@ async fn main() {
         .build()
         .expect("Failed to create HTTP client");
 
-    let state = Arc::new(AppState { pool, config, client });
+    let state = Arc::new(AppState {
+        pool,
+        config,
+        client,
+    });
 
     let poll_state = state.clone();
     tokio::spawn(async move {
