@@ -1,8 +1,8 @@
 # Cirrus
 
-> Web-first meteorological workstation
+> Web first meteorological workstation
 
-A comprehensive web-first meteorological workstation. Ingests gridded numerical-weather-prediction output, satellite imagery, station observations, and forecast advisories, decodes them locally, and renders the result as an interactive WebGL workstation — running fully offline post-ingest.
+A comprehensive web first meteorological workstation built on a modern tech stack (Rust, Python, React + TypeScript). Ingests gridded numerical-weather-prediction output, satellite imagery, station observations, and forecast advisories, decodes them locally, and renders the result as an interactive WebGL workstation.
 
 ## Why build a meteorological workstation
 
