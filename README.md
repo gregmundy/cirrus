@@ -22,6 +22,10 @@ Cirrus is the means by which I scratch this itch. It allows me to maintain my fo
 
 *Temperature, geopotential height, and relative humidity contours over a clean basemap. Computed in a Web Worker, rendered with d3-contour and Gaussian smoothing.*
 
+![Station Model Plots](screenshots/smp.png)
+
+> Station observations rendered in WMO standard format with decoded METAR, parsed fields, and flight-category status. The OPMET panel at the bottom shows TAF and SIGMET text products filterable by ICAO identifier.
+
 ## What it does
 
 Cirrus pulls weather data from public sources — the GFS forecast model, GOES satellite imagery, METAR station observations, TAF and SIGMET advisories — decodes them locally, and renders the result as an interactive map you can fly through.
@@ -105,7 +109,14 @@ upstream providers  →  acquisition  →  /data/grib + /data/satellite  +  NOTI
 
 ### Database
 
-Six migrations: `001_init.sql`, `002_gridded_data.sql`, `003_opmet_data.sql`, `004_add_slp.sql`, `005_sigwx_features.sql`, `006_opmet_text.sql`. TimescaleDB hypertable for `gridded_fields`. PostGIS used for SIGWX feature geometry. Aerodrome metadata seeded from OurAirports.
+Six migrations: `001_init.sql`, `002_gridded_data.sql`, `003_opmet_data.sql`, `004_add_slp.sql`, `005_sigwx_features.sql`, `006_opmet_text.sql`. TimescaleDB hypertable for `gridded_fields`. PostGIS used for SIGWX feature geometry.
+
+The `aerodromes` table is seeded from OurAirports by a one-time script — required before METAR ingestion will produce any rows (`metar.rs` filters incoming reports against the table). Run it once after a fresh `cirrus_pgdata` volume:
+
+```bash
+docker compose cp db/seed/load_aerodromes.py decoder:/tmp/load_aerodromes.py
+docker compose exec decoder python /tmp/load_aerodromes.py
+```
 
 ### Working stack
 
